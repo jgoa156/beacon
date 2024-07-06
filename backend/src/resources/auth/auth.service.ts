@@ -12,14 +12,12 @@ import { UserService } from "../user/user.service";
 import * as bcrypt from "bcrypt";
 import * as uuid from "uuid";
 import { SignUpDto } from "./dto/sign-up.dto";
-import { UserTypes } from "../../../src/common/enums.enum";
-import { UserTypeIds } from "../../../src/common/constants.constants";
+import { UserTypes } from "../../../src/common/constants.constants";
 import { LoginDto } from "./dto";
 import { Response } from "express";
-import { CourseService } from "../course/course.service";
-import { CourseUserService } from "../courseUser/courseUser.service";
+import { BranchService } from "../branch/branch.service";
+import { BranchUserService } from "../branchUser/branchUser.service";
 import { getFilesLocation, getFirstName, sendEmail } from "../utils";
-import { UserTypeService } from "../userType/userType.service";
 
 @Injectable()
 export class AuthService {
@@ -27,28 +25,24 @@ export class AuthService {
 		@Inject(forwardRef(() => UserService))
 		private userService: UserService,
 
-		private userTypeService: UserTypeService,
-		private courseService: CourseService,
-		private courseUserService: CourseUserService,
+		private courseService: BranchService,
+		private courseUserService: BranchUserService,
 		private jwtService: JwtService,
 	) {}
 
 	async setAuthorizationHeader(user: any, res: Response) {
-		const userType = await this.userTypeService.findById(user.userTypeId);
 		const token = this.jwtService.sign(
 			{
 				email: user.email,
 				id: user.id,
-				userType: userType.name,
+				userTypeId: user.userTypeId,
 			},
 			{ expiresIn: "30m" },
 		);
 
 		const refreshToken = this.jwtService.sign(
 			{
-				email: user.email,
 				id: user.id,
-				userType: userType.name,
 				isRefreshToken: true,
 			},
 			{
@@ -105,7 +99,7 @@ export class AuthService {
 
 	async login(loginDto: LoginDto, res: Response) {
 		const user = await this.validateUser(loginDto.email, loginDto.password);
-		const courses = await this.courseService.findCoursesByUser(user.id);
+		const branches = await this.courseService.findBranchesByUser(user.id);
 
 		// Generating tokens
 		await this.setAuthorizationHeader(user, res);
@@ -113,70 +107,9 @@ export class AuthService {
 		return {
 			user: {
 				...user,
-				courses,
+				branches,
 				profileImage: user.profileImage
 					? `${getFilesLocation("profile-images")}/${user.profileImage}`
-					: null,
-				password: undefined,
-			},
-		};
-	}
-
-	async signUp(signUpDto: SignUpDto, res: Response) {
-		if (await this.userService.findByEmail(signUpDto.email)) {
-			throw new BadRequestException("Email already in use");
-		}
-		if (signUpDto.cpf && (await this.userService.findByCpf(signUpDto.cpf))) {
-			throw new BadRequestException("CPF already in use");
-		}
-		if (!(await this.courseService.findById(signUpDto.courseId))) {
-			throw new BadRequestException("Course not found");
-		}
-		if (await this.courseUserService.findByEnrollment(signUpDto.enrollment)) {
-			throw new BadRequestException("Enrollment already in use");
-		}
-
-		const { courseId, enrollment, startYear, ..._signUpDto } = signUpDto;
-
-		// Registering user
-		const hashedPassword = bcrypt.hashSync(_signUpDto.password, 10);
-		const user = await this.userService.create({
-			..._signUpDto,
-			cpf: signUpDto.cpf ? signUpDto.cpf.replace(/\D/g, "") : null,
-			password: hashedPassword,
-			userTypeId: UserTypeIds[UserTypes.STUDENT], // Sign up can only be done by students
-		});
-
-		// Generate searchHash
-		const searchHash = `${user.id};${user.name};${user.email};${user.cpf}`;
-
-		// Update user with searchHash
-		const updatedUser = await this.userService.update(user.id, { searchHash });
-
-		// Registering course
-		await this.courseUserService
-			.create({
-				courseId,
-				enrollment,
-				startYear,
-				userId: user.id,
-			})
-			.then(() => this.userService.updateSearchHash(user.id));
-
-		const courses = await this.courseService.findCoursesByUser(updatedUser.id);
-
-		// Generating tokens
-		await this.setAuthorizationHeader(updatedUser, res);
-
-		// Sending welcome email
-		this.sendWelcomeEmail(updatedUser);
-
-		return {
-			user: {
-				...updatedUser,
-				courses,
-				profileImage: updatedUser.profileImage
-					? `${getFilesLocation("profile-images")}/${updatedUser.profileImage}`
 					: null,
 				password: undefined,
 			},
@@ -206,10 +139,10 @@ export class AuthService {
 	async sendWelcomeEmail(user: any) {
 		await sendEmail(
 			user.email,
-			"Bem vindo ao Pyramid!",
+			"Bem vindo ao Beacon!",
 			`Olá, ${getFirstName(
 				user.name,
-			)}! Você foi cadastrado com sucesso no Pyramid, uma plataforma do ICOMP para gerenciar suas atividades extracurriculares.
+			)}! Você foi cadastrado com sucesso no Beacon, uma plataforma utilizada pela sua empresa para gerenciamento de ordens de compra.
       Para acessar a plataforma, clique no link a seguir: ${
 				process.env.FRONTEND_URL
 			}`,
@@ -234,7 +167,7 @@ export class AuthService {
 		await sendEmail(
 			email,
 			"Alteração de senha",
-			`Você ou algum coordenador solicitou alteração de senha para a sua conta. Para alterar sua senha no Pyramid, clique no link a seguir: ${`${process.env.FRONTEND_URL}/conta/senha?token=${token}`}.
+			`Você ou algum administrador solicitou alteração de senha para a sua conta. Para alterar sua senha no Beacon, clique no link a seguir: ${`${process.env.FRONTEND_URL}/conta/senha?token=${token}`}.
       O token expira em 1 hora.
       
       Caso não tenha sido você, desconsidere este email.

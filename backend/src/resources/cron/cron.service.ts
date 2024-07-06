@@ -14,7 +14,7 @@ export class CronService {
 	initCronJobs() {
 		// Schedule a task to run every day at midnight
 		cron.schedule("0 0 * * *", () => this.clearTmpFolder());
-		cron.schedule("0 0 * * *", () => this.clearUnusedSubmissionFiles());
+		cron.schedule("0 0 * * *", () => this.clearUnusedOrderFiles());
 		cron.schedule("0 0 * * *", () => this.clearUnusedProfileImages());
 	}
 
@@ -42,25 +42,25 @@ export class CronService {
 		});
 	}
 
-	clearUnusedSubmissionFiles() {
-		console.log("Clearing unused submission files");
-		const tmpFolderPath = "./public/files/submissions/";
+	clearUnusedOrderFiles() {
+		console.log("Clearing unused order files");
+		const tmpFolderPath = "./public/files/orders/";
 
 		fs.readdir(tmpFolderPath, (err, files) => {
 			if (err) {
-				console.error("Error reading unused submission files:", err);
+				console.error("Error reading unused order files:", err);
 				return;
 			}
 
 			files.forEach(async (file) => {
 				const filePath = `${tmpFolderPath}/${file}`;
-				const submission = await this.prisma.submission.findFirst({
+				const order = await this.prisma.order.findFirst({
 					where: {
 						file: file,
 					},
 				});
 
-				if (!submission) {
+				if (!order) {
 					fs.unlink(filePath, (err) => {
 						if (err) {
 							console.error(`Error deleting file ${filePath}:`, err);

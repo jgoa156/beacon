@@ -1,0 +1,28 @@
+Tipos
+- Admin = unidade matriz
+-- Adiciona/mantém usuários
+-- Adiciona/mantém fornecedores
+-- Adiciona/mantém filiais
+-- Aprova ordens de compra
+
+- Gerente
+-- Adiciona/mantém fornecedores
+-- Aprova ordens de compra
+-- Solicita ordens de compra
+
+Ordem de compra
+1. Escolha de fornecedor
+2. Produtos são adicionados (nome, categoria, valor unitário, unidade de medida, quantidade)
+
+
+> COM CONTROLE DE STATUS COM CORES: EM ABERTO / AUTORIZADO / COMPRADO / ENVIADO / CONCLUIDO / NÃO AUTORIZADO.
+
+> CONTROLE DE PRIORIDADE / TEMPO EM ABERTO.
+
+
+-- Schema
+-- Seeds
+
+-- Course -> Branch
+-- SubmissionActionType -> OrderActionType
+-- SubmissionAction -> OrderAction

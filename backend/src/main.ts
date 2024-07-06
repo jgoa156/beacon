@@ -32,7 +32,7 @@ async function bootstrap() {
 		"/files/profile-images",
 		express.static("public/files/profile-images"),
 	);
-	app.use("/files/submissions", express.static("public/files/submissions"));
+	app.use("/files/orders", express.static("public/files/orders"));
 	createSwaggerDocument(app);
 
 	console.log(`Server started at localhost:${process.env.BACKEND_PORT}`);

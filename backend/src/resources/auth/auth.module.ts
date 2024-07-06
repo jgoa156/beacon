@@ -3,18 +3,16 @@ import { AuthService } from "./auth.service";
 import { JwtModule } from "@nestjs/jwt";
 import { UserModule } from "../user/user.module";
 import { AuthController } from "./auth.controller";
-import { CourseUserModule } from "../courseUser/courseUser.module";
-import { CourseModule } from "../course/course.module";
 import { PrismaService } from "../prisma/prisma.service";
 import { JwtStrategy } from "../../../src/guards/strategies/jwt.strategy";
-import { UserTypeModule } from "../userType/userType.module";
+import { BranchModule } from "../branch/branch.module";
+import { BranchUserModule } from "../branchUser/branchUser.module";
 
 @Module({
 	imports: [
 		forwardRef(() => UserModule),
-		UserTypeModule,
-		CourseModule,
-		CourseUserModule,
+		BranchModule,
+		BranchUserModule,
 		JwtModule.register({
 			secret: process.env.JWT_SECRET,
 			signOptions: { expiresIn: "1h" },

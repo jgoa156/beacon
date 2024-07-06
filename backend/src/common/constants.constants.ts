@@ -1,27 +1,71 @@
-export enum UserTypeIds {
-	"Coordenador" = 1,
-	"Secretário" = 2,
-	"Aluno" = 3,
-}
+export const UserTypes = {
+  ADMIN: {
+    id: 1,
+    name: "Administrador",
+  },
+  WORKER: {
+    id: 2,
+    name: "Funcionário",
+  },
+};
 
-export enum SubmissionActionIds {
-	"submeteu" = 1,
-	"pré-aprovou" = 2,
-	"aprovou" = 3,
-	"rejeitou" = 4,
-	"comentou" = 5,
-	"editou" = 6,
-}
+export const OrderActionTypes = {
+  STATUS: {
+    id: 1,
+    name: "atualizou o status",
+  },
+  PRIORITY: {
+    id: 2,
+    name: "atualizou a prioridade",
+  },
+  COMMENTED: {
+    id: 3,
+    name: "comentou",
+  },
+  EDITED: {
+    id: 4,
+    name: "alterou",
+  },
+};
 
-export enum StatusSubmissions {
-	"Submetido" = 1,
-	"Pré-aprovado" = 2,
-	"Aprovado" = 3,
-	"Rejeitado" = 4,
-}
+export const Status = {
+  PENDING: {
+    id: 1,
+    name: "Em aberto",
+  },
+  AUTHORIZED: {
+    id: 2,
+    name: "Autorizado",
+  },
+  BOUGHT: {
+    id: 3,
+    name: "Comprado",
+  },
+  SHIPPED: {
+    id: 4,
+    name: "Enviado",
+  },
+  FINISHED: {
+    id: 5,
+    name: "Finalizado",
+  },
+  UNAUTHORIZED: {
+    id: 6,
+    name: "Não autorizado",
+  },
+};
 
-export enum ActivityGroupIds {
-	"ensino" = 1,
-	"pesquisa" = 2,
-	"extensao" = 3,
-}
+export const Priority = {
+  LOW: {
+    id: 1,
+    name: "Baixa",
+  },
+  MEDIUM: {
+    id: 2,
+    name: "Média",
+  },
+  HIGH: {
+    id: 3,
+    name: "Alta",
+  },
+};

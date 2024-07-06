@@ -6,13 +6,13 @@ import {
 	UnauthorizedException,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { SubmissionService } from "../../src/resources/submission/submission.service";
+import { OrderService } from "../../src/resources/order/order.service";
 
 @Injectable()
 export class IsOwnerGuard implements CanActivate {
 	constructor(
 		private reflector: Reflector,
-		private submissionService: SubmissionService,
+		private orderService: OrderService,
 	) {}
 
 	canActivate(context: ExecutionContext): boolean | Promise<boolean> {
@@ -59,8 +59,8 @@ export class IsOwnerGuard implements CanActivate {
 		entityType: string,
 	): Promise<boolean> {
 		let resource;
-		if (entityType === "submission") {
-			resource = await this.submissionService.findById(resourceId);
+		if (entityType === "order") {
+			resource = await this.orderService.findById(resourceId);
 		}
 
 		return resource.userId === userId;

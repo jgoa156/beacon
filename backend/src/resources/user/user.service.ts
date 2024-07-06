@@ -9,11 +9,11 @@ import { User } from "@prisma/client";
 import { AddUserDto, CreateUserDto, UpdateUserDto } from "./dto";
 import { UserTypeService } from "../userType/userType.service";
 import { UserTypes } from "../../../src/common/enums.enum";
-import { CourseService } from "../course/course.service";
-import { CourseUserService } from "../courseUser/courseUser.service";
-import { CourseActivityGroupService } from "../courseActivityGroup/courseActivityGroup.service";
+import { BranchService } from "../course/course.service";
+import { BranchUserService } from "../courseUser/courseUser.service";
+import { BranchActivityGroupService } from "../courseActivityGroup/courseActivityGroup.service";
 import {
-	StatusSubmissions,
+	StatusOrders,
 	UserTypeIds,
 } from "../../../src/common/constants.constants";
 import { EnrollDto } from "./dto/enroll.dto";
@@ -33,9 +33,9 @@ export class UserService {
 	constructor(
 		private prisma: PrismaService,
 		private userTypeService: UserTypeService,
-		private courseService: CourseService,
-		private courseActivityGroupService: CourseActivityGroupService,
-		private courseUserService: CourseUserService,
+		private courseService: BranchService,
+		private courseActivityGroupService: BranchActivityGroupService,
+		private courseUserService: BranchUserService,
 
 		@Inject(forwardRef(() => AuthService))
 		private authService: AuthService,
@@ -43,7 +43,7 @@ export class UserService {
 
 	async updateSearchHash(id: number) {
 		const user = await this.findById(id);
-		const courses = await this.courseService.findCoursesByUser(id);
+		const branches = await this.courseService.findBranchesByUser(id);
 
 		const searchHash = [];
 
@@ -52,7 +52,7 @@ export class UserService {
 		searchHash.push(user.email);
 		searchHash.push(user.cpf);
 
-		courses.forEach((course) => {
+		branches.forEach((course) => {
 			searchHash.push(course.name);
 			searchHash.push(course.enrollment);
 			searchHash.push(course.startYear);
@@ -75,12 +75,12 @@ export class UserService {
 			addUserDto.courseId &&
 			!(await this.courseService.findById(addUserDto.courseId))
 		) {
-			throw new BadRequestException("Course not found");
+			throw new BadRequestException("Branch not found");
 		}
-		if (addUserDto.coursesIds) {
-			for (const _courseId of addUserDto.coursesIds) {
+		if (addUserDto.branchesIds) {
+			for (const _courseId of addUserDto.branchesIds) {
 				if (!(await this.courseService.findById(_courseId))) {
-					throw new BadRequestException(`Course (id: ${_courseId}) not found`);
+					throw new BadRequestException(`Branch (id: ${_courseId}) not found`);
 				}
 			}
 		}
@@ -92,7 +92,7 @@ export class UserService {
 		}
 
 		const {
-			coursesIds,
+			branchesIds,
 			courseId,
 			enrollment,
 			startYear,
@@ -118,8 +118,8 @@ export class UserService {
 				userId: userCreated.id,
 			});
 		} else {
-			// Registering courses
-			coursesIds.forEach(async (_courseId) => {
+			// Registering branches
+			branchesIds.forEach(async (_courseId) => {
 				await this.courseUserService.create({
 					courseId: _courseId,
 					userId: userCreated.id,
@@ -140,14 +140,14 @@ export class UserService {
 			await this.sendWelcomeEmail(userResponsible, userCreated, resetToken);
 		}
 
-		const courses = await this.courseService
-			.findCoursesByUser(userCreated.id)
+		const branches = await this.courseService
+			.findBranchesByUser(userCreated.id)
 			.then(() => this.updateSearchHash(userCreated.id));
 
 		return {
 			user: {
 				...userCreated,
-				courses,
+				branches,
 				profileImage: userCreated.profileImage
 					? `${getFilesLocation("profile-images")}/${userCreated.profileImage}`
 					: null,
@@ -193,7 +193,7 @@ export class UserService {
 		const user = await this.findById(userId);
 		if (!user) throw new BadRequestException("User not found");
 		const course = await this.courseService.findById(courseId);
-		if (!course) throw new BadRequestException("Course not found");
+		if (!course) throw new BadRequestException("Branch not found");
 
 		const { enrollment, startYear } = enrollDto;
 
@@ -213,7 +213,7 @@ export class UserService {
 			})
 			.then(() => this.updateSearchHash(userId));
 
-		return await this.courseService.findCoursesByUser(user.id);
+		return await this.courseService.findBranchesByUser(user.id);
 	}
 
 	async updateEnrollment(
@@ -224,11 +224,11 @@ export class UserService {
 		const user = await this.findById(userId);
 		if (!user) throw new BadRequestException("User not found");
 		const course = await this.courseService.findById(courseId);
-		if (!course) throw new BadRequestException("Course not found");
+		if (!course) throw new BadRequestException("Branch not found");
 
 		const { enrollment, startYear } = enrollDto;
 
-		const courseUser = await this.courseUserService.findByUserIdAndCourseId(
+		const courseUser = await this.courseUserService.findByUserIdAndBranchId(
 			userId,
 			courseId,
 		);
@@ -252,25 +252,25 @@ export class UserService {
 			})
 			.then(() => this.updateSearchHash(userId));
 
-		return await this.courseService.findCoursesByUser(user.id);
+		return await this.courseService.findBranchesByUser(user.id);
 	}
 
 	async unenroll(userId: number, courseId: number): Promise<any> {
 		const user = await this.findById(userId);
 		if (!user) throw new BadRequestException("User not found");
 		const course = await this.courseService.findById(courseId);
-		if (!course) throw new BadRequestException("Course not found");
+		if (!course) throw new BadRequestException("Branch not found");
 
 		await this.courseUserService
-			.unlinkUserFromCourse(userId, courseId)
+			.unlinkUserFromBranch(userId, courseId)
 			.then(() => this.updateSearchHash(userId));
 
-		return await this.courseService.findCoursesByUser(user.id);
+		return await this.courseService.findBranchesByUser(user.id);
 	}
 
-	async groupAndCountWorkload(submissions: any[], courseId: number) {
+	async groupAndCountWorkload(orders: any[], courseId: number) {
 		const activityGroups =
-			await this.courseActivityGroupService.findByCourseId(+courseId);
+			await this.courseActivityGroupService.findByBranchId(+courseId);
 
 		const workloadCount = { totalWorkload: 0 };
 		activityGroups.forEach((_activityGroup) => {
@@ -280,22 +280,19 @@ export class UserService {
 			};
 		});
 
-		submissions.forEach((submission) => {
-			const { CourseActivityGroup } = submission.Activity;
-			const { ActivityGroup, Course } = CourseActivityGroup;
+		orders.forEach((order) => {
+			const { BranchActivityGroup } = order.Activity;
+			const { ActivityGroup, Branch } = BranchActivityGroup;
 
-			if (
-				courseId == Course.id &&
-				submission.status == StatusSubmissions["Aprovado"]
-			) {
+			if (courseId == Branch.id && order.status == StatusOrders["Aprovado"]) {
 				if (!workloadCount[ActivityGroup.name]) {
 					workloadCount[ActivityGroup.name] = {
-						maxWorkload: CourseActivityGroup.maxWorkload,
+						maxWorkload: BranchActivityGroup.maxWorkload,
 						totalWorkload: 0,
 					};
 				}
 
-				workloadCount[ActivityGroup.name].totalWorkload += submission.workload;
+				workloadCount[ActivityGroup.name].totalWorkload += order.workload;
 			}
 		});
 
@@ -325,14 +322,14 @@ export class UserService {
 		const user = await this.findById(userId);
 		if (!user) throw new BadRequestException("User not found");
 
-		const submissions = await this.prisma.submission.findMany({
+		const orders = await this.prisma.order.findMany({
 			where: { userId },
 			include: {
 				Activity: {
 					include: {
-						CourseActivityGroup: {
+						BranchActivityGroup: {
 							include: {
-								Course: {
+								Branch: {
 									select: { id: true, code: true, name: true },
 								},
 								ActivityGroup: {
@@ -346,27 +343,26 @@ export class UserService {
 		});
 
 		const course = await this.courseService.findById(courseId);
-		const courseSubmissions = submissions.filter(
-			(submission) =>
-				submission.Activity.CourseActivityGroup.Course.id === courseId,
+		const courseOrders = orders.filter(
+			(order) => order.Activity.BranchActivityGroup.Branch.id === courseId,
 		);
 
-		const totalSubmissions = courseSubmissions.length;
-		const pendingSubmissions = courseSubmissions.filter(
-			(submission) => submission.status === StatusSubmissions["Submetido"],
+		const totalOrders = courseOrders.length;
+		const pendingOrders = courseOrders.filter(
+			(order) => order.status === StatusOrders["Submetido"],
 		).length;
-		const preApprovedSubmissions = courseSubmissions.filter(
-			(submission) => submission.status === StatusSubmissions["Pré-aprovado"],
+		const preApprovedOrders = courseOrders.filter(
+			(order) => order.status === StatusOrders["Pré-aprovado"],
 		).length;
-		const approvedSubmissions = courseSubmissions.filter(
-			(submission) => submission.status === StatusSubmissions["Aprovado"],
+		const approvedOrders = courseOrders.filter(
+			(order) => order.status === StatusOrders["Aprovado"],
 		).length;
-		const rejectedSubmissions = courseSubmissions.filter(
-			(submission) => submission.status === StatusSubmissions["Rejeitado"],
+		const rejectedOrders = courseOrders.filter(
+			(order) => order.status === StatusOrders["Rejeitado"],
 		).length;
 
 		const workloadCount = await this.groupAndCountWorkload(
-			courseSubmissions,
+			courseOrders,
 			courseId,
 		);
 
@@ -379,11 +375,11 @@ export class UserService {
 			},
 			course,
 			workloadCount,
-			totalSubmissions,
-			pendingSubmissions,
-			preApprovedSubmissions,
-			approvedSubmissions,
-			rejectedSubmissions,
+			totalOrders,
+			pendingOrders,
+			preApprovedOrders,
+			approvedOrders,
+			rejectedOrders,
 		};
 	}
 
@@ -406,7 +402,7 @@ export class UserService {
 		}
 
 		if (courseId && !isNaN(parseInt(courseId))) {
-			where["CourseUsers"] = {
+			where["BranchUsers"] = {
 				some: {
 					courseId: parseInt(courseId),
 				},
@@ -424,18 +420,18 @@ export class UserService {
 				take: limit ? parseInt(limit) : undefined,
 				include: {
 					UserType: { select: { id: true, name: true } },
-					CourseUsers: {
+					BranchUsers: {
 						include: {
-							Course: { select: { id: true, name: true } },
+							Branch: { select: { id: true, name: true } },
 						},
 					},
-					Submissions: {
+					Orders: {
 						include: {
 							Activity: {
 								include: {
-									CourseActivityGroup: {
+									BranchActivityGroup: {
 										include: {
-											Course: {
+											Branch: {
 												select: { id: true, code: true, name: true },
 											},
 											ActivityGroup: {
@@ -456,9 +452,9 @@ export class UserService {
 
 		const _users = await Promise.all(
 			users.map(async (user) => {
-				const courses = user.CourseUsers.map((courseUser) => ({
-					id: courseUser.Course.id,
-					name: courseUser.Course.name,
+				const branches = user.BranchUsers.map((courseUser) => ({
+					id: courseUser.Branch.id,
+					name: courseUser.Branch.name,
 					enrollment: courseUser.enrollment,
 					startYear: courseUser.startYear,
 				}));
@@ -468,16 +464,16 @@ export class UserService {
 					profileImage: user.profileImage
 						? `${getFilesLocation("profile-images")}/${user.profileImage}`
 						: null,
-					courses,
-					CourseUsers: undefined,
+					branches,
+					BranchUsers: undefined,
 					password: undefined,
 					userType: user.UserType,
 					UserType: undefined,
 					workloadCount:
 						user.userTypeId === UserTypeIds.Aluno
-							? await this.groupAndCountWorkload(user.Submissions, +courseId)
+							? await this.groupAndCountWorkload(user.Orders, +courseId)
 							: undefined,
-					Submissions: undefined,
+					Orders: undefined,
 				};
 			}),
 		);

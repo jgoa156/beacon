@@ -18,16 +18,16 @@ import {
 	HttpStatus,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
-import { SubmissionService } from "../submission/submission.service";
+import { OrderService } from "../order/order.service";
 import { AddUserDto, UpdateUserDto, EnrollDto } from "./dto";
 import { JwtAuthGuard } from "../../../src/guards/jwt-auth.guard";
-import { CreateSubmissionDto } from "../submission/dto";
+import { CreateOrderDto } from "../order/dto";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { diskStorage } from "multer";
 import { IsOwnerGuard } from "../../../src/guards/is-owner.guard";
 import { RolesGuard } from "../../../src/guards/roles.guard";
 import { Roles } from "../../../src/decorators/roles.decorator";
-import { UserTypes } from "../../../src/common/enums.enum";
+import { UserTypes } from "../../../src/common/constants.constants";
 import { ExclusiveRolesGuard } from "../../../src/guards/exclusive-roles.guard";
 import { AuthService } from "../auth/auth.service";
 
@@ -36,12 +36,12 @@ export class UserController {
 	constructor(
 		private readonly userService: UserService,
 		private readonly authService: AuthService,
-		private readonly submissionService: SubmissionService,
+		private readonly orderService: OrderService,
 	) {}
 
 	@Get()
 	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
-	@Roles(UserTypes.COORDINATOR, UserTypes.SECRETARY, UserTypes.STUDENT)
+	@Roles(UserTypes.ADMIN, UserTypes.WORKER)
 	async findAll(
 		@Query()
 		query: {
@@ -49,21 +49,21 @@ export class UserController {
 			limit: number;
 			search: string;
 			type: string;
-			courseId: number;
+			branchId: number;
 			active: boolean;
 		},
 	) {
 		return await this.userService.findAll(query);
 	}
 
-	@Get(":id/report/:courseId")
+	@Get(":id/report/:branchId")
 	@UseGuards(JwtAuthGuard, RolesGuard, IsOwnerGuard)
 	@Roles(UserTypes.COORDINATOR, UserTypes.SECRETARY, UserTypes.STUDENT)
 	async getUserReport(
 		@Param("id") id: string,
-		@Param("courseId") courseId: string,
+		@Param("branchId") branchId: string,
 	) {
-		return await this.userService.getUserReport(+id, +courseId);
+		return await this.userService.getUserReport(+id, +branchId);
 	}
 
 	@Get(":id")
@@ -73,10 +73,10 @@ export class UserController {
 		return await this.userService.findById(+id);
 	}
 
-	@Get(":id/submissions")
+	@Get(":id/orders")
 	@UseGuards(JwtAuthGuard, RolesGuard, IsOwnerGuard)
 	@Roles(UserTypes.COORDINATOR, UserTypes.SECRETARY, UserTypes.STUDENT)
-	async findSubmissionsByUserId(
+	async findOrdersByUserId(
 		@Param("id") id: string,
 		@Query()
 		query: {
@@ -86,7 +86,7 @@ export class UserController {
 			courseId: number;
 		},
 	) {
-		return await this.submissionService.findAll({
+		return await this.orderService.findAll({
 			...query,
 			userId: +id,
 		});
@@ -134,7 +134,7 @@ export class UserController {
 	)
 	async submit(
 		@Param("id") id: string,
-		@Body() createSubmissionDto: CreateSubmissionDto,
+		@Body() createOrderDto: CreateOrderDto,
 		@UploadedFile(
 			new ParseFilePipeBuilder()
 				.addFileTypeValidator({
@@ -149,11 +149,7 @@ export class UserController {
 		)
 		file: Express.Multer.File,
 	) {
-		return await this.submissionService.submit(
-			+id,
-			createSubmissionDto,
-			file.filename,
-		);
+		return await this.orderService.submit(+id, createOrderDto, file.filename);
 	}
 
 	@UseGuards(JwtAuthGuard, IsOwnerGuard)

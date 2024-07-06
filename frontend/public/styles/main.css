@@ -31,6 +31,13 @@
 	--toastify-color-success: var(--primary-color);
 	--toastify-color-warning: var(--warning-hover);
 	--toastify-color-error: var(--danger);
+
+	--pending: var(--warning-hover);
+	--authorized: var(--success);
+	--bought: var(--primary-color);
+	--shipped: #15cebb;
+	--finished: #9a1bb1;
+	--unauthorized: var(--danger);
 }
 
 /*---------------------- GENERAL ----------------------*/

@@ -40,7 +40,7 @@ export class AddUserDto {
 	@IsOptional()
 	@IsArray()
 	@Allow()
-	coursesIds?: number[];
+	branchesIds?: number[];
 
 	@IsOptional()
 	@IsString()
