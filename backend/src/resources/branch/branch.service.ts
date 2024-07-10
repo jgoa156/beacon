@@ -23,9 +23,13 @@ export class BranchService {
 
 		searchHash.push(branch.id);
 		searchHash.push(branch.name);
-		searchHash.push(branch.code);
-		searchHash.push(branch.periods);
-		searchHash.push(branch.minWorkload);
+		searchHash.push(branch.cnpj);
+		searchHash.push(branch.phone);
+		searchHash.push(branch.email);
+		searchHash.push(branch.address);
+		searchHash.push(branch.city);
+		searchHash.push(branch.state);
+		searchHash.push(branch.zipCode);
 
 		await this.prisma.branch.update({
 			where: { id },
@@ -253,45 +257,6 @@ export class BranchService {
 		return await this.prisma.branch.findFirst({
 			where: { code, id: { not: excludeId }, isActive: true },
 		});
-	}
-
-	async findBranchesByUser(userId: number): Promise<any[]> {
-		const branchUsers = await this.prisma.branchUser.findMany({
-			where: { userId },
-			select: {
-				branchId: true,
-				enrollment: true,
-				startYear: true,
-			},
-		});
-
-		const branchIds = branchUsers.map((cu) => cu.branchId);
-
-		const branches = await this.prisma.branch.findMany({
-			where: {
-				id: {
-					in: branchIds,
-				},
-				isActive: true,
-			},
-			select: {
-				id: true,
-				name: true,
-				code: true,
-				periods: true,
-				minWorkload: true,
-			},
-		});
-
-		// Anexar informações de inscrição e data de início aos cursos
-		const branchesWithEnrollmentInfo = branches.map((branch) => ({
-			...branch,
-			enrollment: branchUsers.find((cu) => cu.branchId === branch.id)
-				?.enrollment,
-			startYear: branchUsers.find((cu) => cu.branchId === branch.id)?.startYear,
-		}));
-
-		return branchesWithEnrollmentInfo;
 	}
 
 	async findActivitiesByBranchAndActivityGroup(

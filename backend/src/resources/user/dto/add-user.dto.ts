@@ -33,25 +33,9 @@ export class AddUserDto {
 	userType: string;
 
 	@IsOptional()
-	@IsInt()
-	@Allow()
-	courseId?: number;
-
-	@IsOptional()
 	@IsArray()
 	@Allow()
 	branchesIds?: number[];
-
-	@IsOptional()
-	@IsString()
-	@Allow()
-	enrollment?: string;
-
-	@IsOptional()
-	@IsInt()
-	@Allow()
-	@Transform((value) => parseInt(value.value, 10))
-	startYear?: number;
 
 	@IsOptional()
 	@IsString()

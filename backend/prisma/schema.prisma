@@ -21,9 +21,10 @@ model User {
   userTypeId        Int       @default(1)
   password          String?   @db.VarChar(255)
   profileImage      String?   @db.VarChar(255)
-  isActive          Boolean   @default(true)
   resetToken        String?   @unique
   resetTokenExpires DateTime?
+
+  isActive          Boolean   @default(true)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime? @updatedAt
 
@@ -39,6 +40,14 @@ model User {
 model Branch {
   id          Int       @id @default(autoincrement())
   name        String    @unique @db.VarChar(100)
+  cnpj        String    @unique @db.VarChar(14)
+  phone       String?   @db.VarChar(15)
+  email       String?   @db.VarChar(100)
+  address     String?   @db.VarChar(255)
+  city        String?   @db.VarChar(100)
+  state       String?   @db.VarChar(2)
+  zipCode     String?   @db.VarChar(8)
+
   isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime? @updatedAt
@@ -53,7 +62,6 @@ model Branch {
 
 // Usuário da filial
 model BranchUser {
-  id         Int      @id @default(autoincrement())
   branchId   Int
   userId     Int
 
@@ -63,6 +71,7 @@ model BranchUser {
   Branch Branch @relation(fields: [branchId], references: [id])
   User   User   @relation(fields: [userId], references: [id])
 
+  @@id([branchId, userId])
   @@map("BranchUsers")
 }
 
@@ -71,6 +80,13 @@ model Supplier {
   id         Int       @id @default(autoincrement())
   name       String    @unique @db.VarChar(100)
   cnpj       String    @unique @db.VarChar(14)
+  phone      String?   @db.VarChar(15)
+  email      String?   @db.VarChar(100)
+  address    String?   @db.VarChar(255)
+  city       String?   @db.VarChar(100)
+  state      String?   @db.VarChar(2)
+  zipCode    String?   @db.VarChar(8)
+
   isActive   Boolean   @default(true)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime? @updatedAt
@@ -90,6 +106,7 @@ model Order {
   description      String    @db.VarChar(100)
   status           Int?      @default(1)
   priority         Int?      @default(1)
+  
   isActive         Boolean   @default(true)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime? @updatedAt
@@ -106,13 +123,15 @@ model Order {
 
 // Categoria de produto
 model Category {
-  id       Int       @id @default(autoincrement())
-  name     String    @unique @db.VarChar(100)
-  isActive Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime? @updatedAt
+  id          Int       @id @default(autoincrement())
+  name        String    @unique @db.VarChar(100)
+  description String? @db.Text
 
-  Products Product[]
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @updatedAt
+
+  Products    Product[]
 
   @@map("Categories")
 }
@@ -125,6 +144,7 @@ model Product {
   unitMeasure     String    @db.VarChar(10)
   unitValue       Float?
   description     String?   @db.Text
+
   isActive        Boolean   @default(true)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime? @updatedAt
@@ -137,23 +157,23 @@ model Product {
 
 // Produto da ordem
 model OrderProduct {
-  id         Int     @id @default(autoincrement())
   orderId    Int
   productId  Int
   quantity   Int
   unitValue  Float
+
   createdAt  DateTime  @default(now())
   updatedAt  DateTime? @updatedAt
 
   Order   Order   @relation(fields: [orderId], references: [id])
   Product Product @relation(fields: [productId], references: [id])
 
+  @@id([orderId, productId])
   @@map("OrderProducts")
 }
 
 // (Histórico) Ação da ordem
 model OrderAction {
-  id                     Int       @id @default(autoincrement())
   userId                 Int
   orderId                Int
   orderActionTypeId      Int       @default(1)
@@ -166,6 +186,7 @@ model OrderAction {
 
   User                   User      @relation(fields: [userId], references: [id])
   Order                  Order     @relation(fields: [orderId], references: [id])
-
+  
+  @@id([userId, orderId])
   @@map("OrderActions")
 }

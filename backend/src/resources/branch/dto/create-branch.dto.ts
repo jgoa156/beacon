@@ -1,34 +1,13 @@
-import { Type } from "class-transformer";
+import { Transform } from "class-transformer";
 import {
 	IsString,
-	IsInt,
 	Length,
-	Min,
-	Max,
 	IsNotEmpty,
-	ValidateNested,
 	IsOptional,
+	Validate,
+	IsEmail,
 } from "class-validator";
-
-class ActivityGroups {
-	@IsInt()
-	@IsNotEmpty()
-	@Min(1)
-	@Max(300)
-	education: number;
-
-	@IsInt()
-	@IsNotEmpty()
-	@Min(1)
-	@Max(300)
-	research: number;
-
-	@IsInt()
-	@IsNotEmpty()
-	@Min(1)
-	@Max(300)
-	extension: number;
-}
+import { IsCNPJ } from "src/common/validators.validator";
 
 export class CreateBranchDto {
 	@IsString()
@@ -36,25 +15,33 @@ export class CreateBranchDto {
 	@Length(3, 100)
 	name: string;
 
-	@IsString()
 	@IsNotEmpty()
-	@Length(2, 10)
-	code: string;
+	@Validate(IsCNPJ)
+	@Transform((value) => value.value.replace(/\D/g, ""))
+	cnpj: string;
 
-	@IsInt()
-	@IsNotEmpty()
-	@Min(1)
-	@Max(16)
-	periods: number;
+	@IsString()
+	@IsOptional()
+	phone?: number;
 
 	@IsOptional()
-	@IsInt()
-	@Min(1)
-	@Max(500)
-	minWorkload: number;
+	@IsEmail()
+	email?: string;
 
-	@IsNotEmpty()
-	@ValidateNested()
-	@Type(() => ActivityGroups)
-	activityGroupsWorkloads: ActivityGroups;
+	@IsString()
+	@IsOptional()
+	address?: number;
+
+	@IsString()
+	@IsOptional()
+	city?: number;
+
+	@IsString()
+	@IsOptional()
+	state?: number;
+
+	@IsString()
+	@IsOptional()
+	@Transform((value) => value.value.replace(/\D/g, ""))
+	zipCode?: number;
 }

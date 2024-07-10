@@ -26,13 +26,6 @@ export class CategoryController {
 		private readonly orderService: OrderService,
 	) {}
 
-	@Get(":id/report")
-	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
-	@Roles(UserTypes.COORDINATOR, UserTypes.SECRETARY)
-	async getCategoryReport(@Param("id") id: string) {
-		return await this.categoryService.getCategoryReport(+id);
-	}
-
 	@Get()
 	async findAll(
 		@Query()
@@ -50,9 +43,8 @@ export class CategoryController {
 		return await this.categoryService.findById(+id);
 	}
 
-	@Get(":id/orders")
-	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
-	@Roles(UserTypes.COORDINATOR, UserTypes.SECRETARY)
+	@Get(":id/products")
+	@UseGuards(JwtAuthGuard)
 	async findOrdersByCategoryId(
 		@Param("id") id: string,
 		@Query()
@@ -70,20 +62,9 @@ export class CategoryController {
 		});
 	}
 
-	@Get(":id/:activityGroupName/activities")
-	async findActivitiesByCategoryAndActivityGroup(
-		@Param("id") id: string,
-		@Param("activityGroupName") activityGroupName: string,
-	) {
-		return await this.categoryService.findActivitiesByCategoryAndActivityGroup(
-			+id,
-			activityGroupName,
-		);
-	}
-
 	@Post()
 	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
-	@Roles(UserTypes.COORDINATOR)
+	@Roles(UserTypes.ADMIN)
 	@UsePipes(
 		new ValidationPipe({ transform: true, skipMissingProperties: false }),
 	)
@@ -91,27 +72,9 @@ export class CategoryController {
 		return await this.categoryService.create(createCategoryDto);
 	}
 
-	@Post(":id/:activityGroupName/activities")
-	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
-	@Roles(UserTypes.COORDINATOR)
-	@UsePipes(
-		new ValidationPipe({ transform: true, skipMissingProperties: false }),
-	)
-	async createActivityByCategoryAndActivityGroup(
-		@Param("id") id: string,
-		@Param("activityGroupName") activityGroupName: string,
-		@Body() createActivityDto: CreateActivityDto,
-	) {
-		return await this.categoryService.createActivityByCategoryAndActivityGroup(
-			+id,
-			activityGroupName,
-			createActivityDto,
-		);
-	}
-
 	@Patch(":id")
 	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
-	@Roles(UserTypes.COORDINATOR)
+	@Roles(UserTypes.ADMIN)
 	@UsePipes(
 		new ValidationPipe({ transform: true, skipMissingProperties: false }),
 	)
@@ -124,7 +87,7 @@ export class CategoryController {
 
 	@Delete(":id")
 	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
-	@Roles(UserTypes.COORDINATOR)
+	@Roles(UserTypes.ADMIN)
 	async remove(@Param("id") id: string) {
 		return await this.categoryService.remove(+id);
 	}

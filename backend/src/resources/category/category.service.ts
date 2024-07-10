@@ -2,19 +2,10 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { Category } from "@prisma/client";
 import { CreateCategoryDto, UpdateCategoryDto } from "./dto";
-import { CategoryActivityGroupService } from "../categoryActivityGroup/categoryActivityGroup.service";
-import { ActivityGroups } from "../../common/enums.enum";
-import { ActivityService } from "../activity/activity.service";
-import { CreateActivityDto } from "../activity/dto";
-import { StatusOrders } from "../../common/constants.constants";
 
 @Injectable()
 export class CategoryService {
-	constructor(
-		private prisma: PrismaService,
-		private categoryActivityGroupService: CategoryActivityGroupService,
-		private activityService: ActivityService,
-	) {}
+	constructor(private prisma: PrismaService) {}
 
 	async updateSearchHash(id: number) {
 		const category = await this.findById(id);
@@ -43,58 +34,6 @@ export class CategoryService {
 
 		return { ...category };
 	}
-
-	/*async getCategoryReport(id: number): Promise<any> {
-		const category = await this.findById(id);
-		if (!category) throw new BadRequestException("Category not found");
-
-		const totalStudents = await this.prisma.categoryUser.count({
-			where: {
-				categoryId: id,
-				enrollment: { not: null },
-			},
-		});
-
-		const orders = await this.prisma.order.findMany({
-			where: {
-				Activity: {
-					CategoryActivityGroup: {
-						Category: {
-							id: id,
-						},
-					},
-				},
-			},
-			select: {
-				id: true,
-				status: true,
-			},
-		});
-
-		const totalOrders = orders.length;
-		const pendingOrders = orders.filter(
-			(order) => order.status === StatusOrders["Submetido"],
-		).length;
-		const preApprovedOrders = orders.filter(
-			(order) => order.status === StatusOrders["Pré-aprovado"],
-		).length;
-		const approvedOrders = orders.filter(
-			(order) => order.status === StatusOrders["Aprovado"],
-		).length;
-		const rejectedOrders = orders.filter(
-			(order) => order.status === StatusOrders["Rejeitado"],
-		).length;
-
-		return {
-			category: category,
-			totalStudents: totalStudents,
-			totalOrders: totalOrders,
-			pendingOrders: pendingOrders,
-			preApprovedOrders: preApprovedOrders,
-			approvedOrders: approvedOrders,
-			rejectedOrders: rejectedOrders,
-		};
-	}*/
 
 	async findAll(query: any): Promise<any> {
 		const { page, limit, search } = query;
