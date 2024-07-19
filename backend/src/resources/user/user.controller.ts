@@ -18,10 +18,8 @@ import {
 	HttpStatus,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
-import { OrderService } from "../order/order.service";
-import { AddUserDto, UpdateUserDto, EnrollDto } from "./dto";
+import { CreateUserDto, UpdateUserDto } from "./dto";
 import { JwtAuthGuard } from "../../../src/guards/jwt-auth.guard";
-import { CreateOrderDto } from "../order/dto";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { diskStorage } from "multer";
 import { IsOwnerGuard } from "../../../src/guards/is-owner.guard";
@@ -29,15 +27,10 @@ import { RolesGuard } from "../../../src/guards/roles.guard";
 import { Roles } from "../../../src/decorators/roles.decorator";
 import { UserTypes } from "../../../src/common/constants.constants";
 import { ExclusiveRolesGuard } from "../../../src/guards/exclusive-roles.guard";
-import { AuthService } from "../auth/auth.service";
 
 @Controller("users")
 export class UserController {
-	constructor(
-		private readonly userService: UserService,
-		private readonly authService: AuthService,
-		private readonly orderService: OrderService,
-	) {}
+	constructor(private readonly userService: UserService) {}
 
 	@Get()
 	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
@@ -56,100 +49,23 @@ export class UserController {
 		return await this.userService.findAll(query);
 	}
 
-	@Get(":id/report/:branchId")
-	@UseGuards(JwtAuthGuard, RolesGuard, IsOwnerGuard)
-	@Roles(UserTypes.COORDINATOR, UserTypes.SECRETARY, UserTypes.STUDENT)
-	async getUserReport(
-		@Param("id") id: string,
-		@Param("branchId") branchId: string,
-	) {
-		return await this.userService.getUserReport(+id, +branchId);
-	}
-
 	@Get(":id")
 	@UseGuards(JwtAuthGuard, RolesGuard, IsOwnerGuard)
-	@Roles(UserTypes.COORDINATOR, UserTypes.SECRETARY, UserTypes.STUDENT)
+	@Roles(UserTypes.ADMIN, UserTypes.WORKER)
 	async findById(@Param("id") id: string) {
 		return await this.userService.findById(+id);
 	}
 
-	@Get(":id/orders")
-	@UseGuards(JwtAuthGuard, RolesGuard, IsOwnerGuard)
-	@Roles(UserTypes.COORDINATOR, UserTypes.SECRETARY, UserTypes.STUDENT)
-	async findOrdersByUserId(
-		@Param("id") id: string,
-		@Query()
-		query: {
-			page: number;
-			limit: number;
-			search: string;
-			courseId: number;
-		},
-	) {
-		return await this.orderService.findAll({
-			...query,
-			userId: +id,
-		});
-	}
-
 	@Post()
-	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
-	@Roles(UserTypes.COORDINATOR, UserTypes.SECRETARY)
+	@UseGuards(JwtAuthGuard)
 	@UsePipes(
 		new ValidationPipe({ transform: true, skipMissingProperties: false }),
 	)
-	async addUser(
-		@Body() addUserDto: AddUserDto,
+	async createUser(
+		@Body() createUserDto: CreateUserDto,
 		@Headers("Authorization") token: string,
 	) {
-		return await this.userService.addUser(addUserDto, token);
-	}
-
-	@Post(":id/enroll/:courseId")
-	@UseGuards(JwtAuthGuard, IsOwnerGuard)
-	@UsePipes(
-		new ValidationPipe({ transform: true, skipMissingProperties: false }),
-	)
-	async enroll(
-		@Param("id") id: string,
-		@Param("courseId") courseId: string,
-		@Body() enrollDto: EnrollDto,
-	) {
-		return await this.userService.enroll(+id, +courseId, enrollDto);
-	}
-
-	@Post(":id/submit")
-	@UseGuards(JwtAuthGuard, IsOwnerGuard)
-	@UsePipes(
-		new ValidationPipe({ transform: true, skipMissingProperties: false }),
-	)
-	@UseInterceptors(
-		FileInterceptor("file", {
-			storage: diskStorage({
-				destination: "./public/files/tmp",
-				filename: (req, file, cb) =>
-					cb(null, `${new Date().getTime()}-${file.originalname}.tmp`),
-			}),
-		}),
-	)
-	async submit(
-		@Param("id") id: string,
-		@Body() createOrderDto: CreateOrderDto,
-		@UploadedFile(
-			new ParseFilePipeBuilder()
-				.addFileTypeValidator({
-					fileType: "pdf",
-				})
-				.addMaxSizeValidator({
-					maxSize: 5000 * 1024,
-				})
-				.build({
-					errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-				}),
-		)
-		file: Express.Multer.File,
-	) {
-		return await this.orderService.submit(+id, createOrderDto, file.filename);
+		return await this.userService.create(createUserDto, token);
 	}
 
 	@UseGuards(JwtAuthGuard, IsOwnerGuard)
@@ -190,7 +106,7 @@ export class UserController {
 
 	@Patch(":id")
 	@UseGuards(JwtAuthGuard, RolesGuard, IsOwnerGuard)
-	@Roles(UserTypes.COORDINATOR)
+	@Roles(UserTypes.ADMIN, UserTypes.WORKER)
 	@UsePipes(
 		new ValidationPipe({ transform: true, skipMissingProperties: false }),
 	)
@@ -198,31 +114,29 @@ export class UserController {
 		return await this.userService.update(+id, updateUserDto);
 	}
 
-	@Patch(":id/enroll/:courseId")
-	@UseGuards(JwtAuthGuard, IsOwnerGuard)
+	@Post(":id/assign/:branchId")
+	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
+	@Roles(UserTypes.ADMIN)
 	@UsePipes(
 		new ValidationPipe({ transform: true, skipMissingProperties: false }),
 	)
-	async updateEnrollment(
-		@Param("id") id: string,
-		@Param("courseId") courseId: string,
-		@Body() enrollDto: EnrollDto,
-	) {
-		return await this.userService.updateEnrollment(+id, +courseId, enrollDto);
+	async assign(@Param("id") id: string, @Param("branchId") branchId: string) {
+		return await this.userService.assign(+id, +branchId);
 	}
 
-	@Delete(":id/unenroll/:courseId")
-	@UseGuards(JwtAuthGuard, IsOwnerGuard)
+	@Delete(":id/unassign/:branchId")
+	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
+	@Roles(UserTypes.ADMIN)
 	@UsePipes(
 		new ValidationPipe({ transform: true, skipMissingProperties: false }),
 	)
-	async unenroll(@Param("id") id: string, @Param("courseId") courseId: string) {
-		return await this.userService.unenroll(+id, +courseId);
+	async unassign(@Param("id") id: string, @Param("branchId") branchId: string) {
+		return await this.userService.unassign(+id, +branchId);
 	}
 
 	@Delete(":id")
 	@UseGuards(JwtAuthGuard, RolesGuard, IsOwnerGuard)
-	@Roles(UserTypes.COORDINATOR)
+	@Roles(UserTypes.ADMIN)
 	@UsePipes(
 		new ValidationPipe({ transform: true, skipMissingProperties: false }),
 	)
@@ -232,7 +146,7 @@ export class UserController {
 
 	@Delete(":ids/mass-remove")
 	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
-	@Roles(UserTypes.COORDINATOR)
+	@Roles(UserTypes.ADMIN)
 	@UsePipes(
 		new ValidationPipe({ transform: true, skipMissingProperties: false }),
 	)

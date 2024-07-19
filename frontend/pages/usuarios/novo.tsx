@@ -14,6 +14,7 @@ import FormAddUser from "components/shared/forms/FormAddUser";
 // Interfaces
 import { IRootState } from "redux/store";
 import IUserLogged from "interfaces/IUserLogged";
+import { restrictPageForAdmin } from "utils";
 
 export default function NovoUsuario() {
   const router = useRouter();
@@ -31,13 +32,7 @@ export default function NovoUsuario() {
 
   // Verifying user
   useEffect(() => {
-    if (!user.logged) {
-      router.replace("/entrar");
-    } else if (user.selectedCourse == null) {
-      router.replace("/conta/curso");
-    } else {
-      setTimeout(() => setLoaded(true), 250);
-    }
+    restrictPageForAdmin(user, router, setLoaded);
   }, [user]);
 
   return (

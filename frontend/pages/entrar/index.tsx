@@ -13,6 +13,7 @@ import FormLogin from "components/shared/forms/FormLogin";
 // Interfaces
 import { IRootState } from "redux/store";
 import IUserLogged from "interfaces/IUserLogged";
+import { restrictPageForUnloggedUsers } from "utils";
 
 export default function Entrar() {
   const router = useRouter();
@@ -21,11 +22,7 @@ export default function Entrar() {
 
   // Verifying user
   useEffect(() => {
-    if (user.logged) {
-      router.replace("/painel");
-    } else {
-      setTimeout(() => setLoaded(true), 250);
-    }
+    restrictPageForUnloggedUsers(user, router, setLoaded);
   }, [user]);
 
   return (

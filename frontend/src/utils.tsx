@@ -6,6 +6,10 @@ import { resetTimer } from "redux/slicer/timer";
 // Shared
 import { toast } from "react-toastify";
 
+// Interfaces
+import { NextRouter } from "next/router";
+import IUserLogged from "interfaces/IUserLogged";
+
 export async function checkAuthentication(): Promise<void> {
   function parseJwt(token) {
     let base64Url = token.split(".")[1];
@@ -74,6 +78,44 @@ export async function checkAuthentication(): Promise<void> {
   } else {
     // If refresh token is expired, kick user
     store.dispatch(logout());
+  }
+}
+
+export function restrictPageForLoggedUsers(user: IUserLogged, router: NextRouter, setLoaded: Function) {
+  if (!user.logged) {
+    router.replace("/entrar");
+  } else if (user.userTypeId === 2 && user.selectedBranch === null) {
+    router.replace("/conta/filial");
+  } else {
+    setTimeout(() => setLoaded(true), 250);
+  }
+}
+
+export function restrictPageForUnloggedUsers(user: IUserLogged, router: NextRouter, setLoaded: Function) {
+  if (user.logged) {
+    router.replace("/painel");
+  } else {
+    setTimeout(() => setLoaded(true), 250);
+  }
+}
+
+export function restrictPageForAdmin(user: IUserLogged, router: NextRouter, setLoaded: Function) {
+  if (!user.logged) {
+    router.replace("/entrar");
+  } else if (user.userTypeId !== 1) {
+    router.replace("/painel");
+  } else {
+    setTimeout(() => setLoaded(true), 250);
+  }
+}
+
+export function restrictPageForUsersWithoutSelectedBranch(user: IUserLogged, router: NextRouter, setLoaded: Function) {
+  if (!user.logged) {
+    router.replace("/entrar");
+  } else if (user.userTypeId === 1 || (user.userTypeId === 2 && user.selectedBranch !== null)) {
+    router.replace("/painel");
+  } else {
+    setTimeout(() => setLoaded(true), 250);
   }
 }
 

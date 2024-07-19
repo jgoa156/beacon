@@ -4,7 +4,8 @@ export default interface IUser {
 	id: number;
 	name: string;
 	email: string;
+	cpf: string;
+	branches: any[];
 
-	createdAt: string;
-	updatedAt: string;
+	isActive: boolean;
 }

@@ -19,16 +19,12 @@ export default function UserTypeSelect({
 }: IUserTypeSelectProps) {
   const userTypes = [
     {
-      id: 3,
-      name: "Aluno",
-    },
-    {
       id: 2,
-      name: "Secretário",
+      name: "Funcionário",
     },
     {
       id: 1,
-      name: "Coordenador",
+      name: "Administrador",
     }
   ];
 

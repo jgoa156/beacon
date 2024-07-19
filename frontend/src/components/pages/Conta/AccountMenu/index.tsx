@@ -29,7 +29,7 @@ export default function AccountMenu({ user }: IAccountMenuProps) {
       component: <FormUpdateAccount user={user} />
     },
     {
-      icon: <i className="bi bi-mortarboard-fill" />,
+      icon: <i className="bi bi-building-fill" />,
       title: "Cursos vinculados",
       component: <EnrollmentList user={user} />
     },

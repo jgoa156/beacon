@@ -22,7 +22,7 @@ export default function EnrollmentGrid({ user }: IEnrollmentGridProps) {
   const [fetching, setFetching] = useState<boolean>(false);
 
   const { dispatch } = store;
-  async function fetchRemoveCourse(data) {
+  /*async function fetchRemoveCourse(data) {
     setFetching(true);
 
     const options = {
@@ -51,36 +51,25 @@ export default function EnrollmentGrid({ user }: IEnrollmentGridProps) {
         toast.error(code in errorMessages ? errorMessages[code] : errorMessages[0]);
         setFetching(false);
       });
-  }
+  }*/
 
   return (
     <div>
       <p className="title">
-        {user.courses.length == 0
-          ? "Você ainda não possui nenhum curso vinculado à sua conta e precisará adicionar um curso antes de prosseguir."
-          : "Você deseja gerenciar as atividades de qual curso?"}
+        {user.branches.length == 0
+          ? "Você ainda não possui nenhuma filial vinculada à sua conta. Contate um administrador."
+          : "Você deseja gerenciar as atividades de qual filial?"}
       </p>
 
       <CourseGridComponent>
-        <AddCourseButton
-          onClick={() =>
-            toggleModalForm(
-              "Vincular curso",
-              <FormLinkCourse user={user} />,
-              "md"
-            )
-          }>
-          <i className="bi bi-plus-lg" />
-        </AddCourseButton>
-
-        {user.courses.map((course) => (
+        {user.branches.map((branch) => (
           <EnrollmentCard
-            key={course.id}
-            course={course}
+            key={branch.id}
+            branch={branch}
             onClick={() => {
-              dispatch(defaultCourse({ ...course, enrollment: course.enrollment }));
+              dispatch(defaultCourse({ ...branch, enrollment: branch.enrollment }));
             }}
-            onDelete={() => fetchRemoveCourse({ userId: user.id, courseId: course.id })}
+            onDelete={() => fetchRemoveCourse({ userId: user.id, branchId: branch.id })}
           />
         ))}
       </CourseGridComponent>

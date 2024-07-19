@@ -35,17 +35,11 @@ export default function FormUpdateAccount({ user }: IFormUpdateAccountProps) {
     setEmail(value);
   };
 
-  const [cpf, setCpf] = useState<string>("");
-  const handleCpf = (value) => {
-    setCpf(value);
-  };
-
   // Loading user prop
   useEffect(() => {
     if (user != null) {
       setName(user.name);
       setEmail(user.email);
-      setCpf(user.cpf ? user.cpf : "");
     }
   }, [user]);
 
@@ -60,17 +54,12 @@ export default function FormUpdateAccount({ user }: IFormUpdateAccountProps) {
 
     if (
       name.length != 0 &&
-      validateEmail(email) &&
-      (cpf.length == 0 || validateCpf(cpf))
+      validateEmail(email)
     ) {
-      let data: any = {
+      fetchUpdateUser({
         name,
         email
-      };
-
-      if (cpf.trim().length > 0 && validateCpf(cpf)) data = { ...data, cpf };
-
-      fetchUpdateUser(data);
+      });
     }
   }
 
@@ -95,14 +84,12 @@ export default function FormUpdateAccount({ user }: IFormUpdateAccountProps) {
         dispatch(login({
           ...user,
           name: response.data.name,
-          email: response.data.email,
-          cpf: response.data.cpf
+          email: response.data.email
         }));
       })
       .catch((error) => {
         const badRequestMessages = {
-          "Email already in use": "Email já cadastrado.",
-          "CPF already in use": "CPF já cadastrado.",
+          "Email already in use": "Email já cadastrado."
         };
 
         const errorMessages = {
@@ -193,11 +180,11 @@ export default function FormUpdateAccount({ user }: IFormUpdateAccountProps) {
           <img
             src={user?.profileImage && user?.profileImage.length > 0
               ? user?.profileImage
-              : `${process.env.basePath}/img/user.png`
+              : `${process.env.img}/user.png`
             }
             alt={user?.name}
             onError={({ currentTarget }) => {
-              currentTarget.src = `${process.env.basePath}/img/user.png`;
+              currentTarget.src = `${process.env.img}/user.png`;
             }}
           />
 
@@ -235,17 +222,6 @@ export default function FormUpdateAccount({ user }: IFormUpdateAccountProps) {
           alert={"Email inválido"}
           displayAlert={sent}
           maxLength={255}
-        />
-
-        <TextInput
-          label={"CPF"}
-          name={"cpf"}
-          value={cpf}
-          handleValue={handleCpf}
-          validate={validateCpf}
-          alert={"CPF Inválido"}
-          displayAlert={sent}
-          mask={"999.999.999-99"}
         />
 
         <Button style={{ marginTop: 15 }} onClick={(e) => handleUpdateUser(e)}>

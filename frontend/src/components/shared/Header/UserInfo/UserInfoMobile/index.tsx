@@ -26,21 +26,23 @@ export default function UserInfoMobile() {
         <img
           src={user?.profileImage && user?.profileImage.length > 0
             ? user?.profileImage
-            : `${process.env.basePath}/img/user.png`
+            : `${process.env.img}/user.png`
           }
           alt={user?.name}
           onError={({ currentTarget }) => {
-            currentTarget.src = `${process.env.basePath}/img/user.png`;
+            currentTarget.src = `${process.env.img}/user.png`;
           }}
         />
       </UserPic>
-      <UserName>{user.name}</UserName>
+      <UserName>{user?.name}</UserName>
 
       <UserRoleWrapper>
         <UserRole>{UserTypes[user.userTypeId]}</UserRole>
-        {(user.selectedCourse) && (
+        {(user?.userTypeId === 1) ? (
+          <UserGroup>Matriz</UserGroup>
+        ) : (user?.userTypeId === 2 && user?.selectedBranch) && (
           <UserGroup>
-            {user.selectedCourse?.name}
+            {user?.selectedBranch?.name}
           </UserGroup>
         )}
       </UserRoleWrapper>

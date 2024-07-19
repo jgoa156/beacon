@@ -5,12 +5,11 @@ const initialState: IUserLogged = {
   id: -1,
   name: "",
   email: "",
-  cpf: "",
   userTypeId: -1,
   profileImage: "",
 
-  courses: [],
-  selectedCourse: null,
+  branches: [],
+  selectedBranch: null,
 
   logged: false,
   token: "",

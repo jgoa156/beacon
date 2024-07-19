@@ -41,11 +41,11 @@ export default function UserInfo({ isMobile = false }: IUserInfoProps) {
           <img
             src={user?.profileImage && user?.profileImage.length > 0
               ? user?.profileImage
-              : `${process.env.basePath}/img/user.png`
+              : `${process.env.img}/user.png`
             }
             alt={user?.name}
             onError={({ currentTarget }) => {
-              currentTarget.src = `${process.env.basePath}/img/user.png`;
+              currentTarget.src = `${process.env.img}/user.png`;
             }}
           />
         </UserPic>
@@ -71,18 +71,25 @@ export default function UserInfo({ isMobile = false }: IUserInfoProps) {
         </OverlayTrigger>
       </UserName>
 
-      {(!isMobile && user.selectedCourse) && (
+      {(!isMobile && user.userTypeId === 2 && user.selectedBranch) && (
         <UserGroup>
-          {user.selectedCourse?.name}
+          {user.selectedBranch?.name}
 
           <OverlayTrigger
             placement="left"
-            overlay={<Tooltip>Trocar de curso</Tooltip>}
+            overlay={<Tooltip>Trocar de filial</Tooltip>}
           >
             <ChangeCourse onClick={() => handleChangeCourse()}>
               <i className="bi bi-arrow-left-right" />
             </ChangeCourse>
           </OverlayTrigger>
+        </UserGroup>
+      )}
+
+      {(!isMobile && user.userTypeId === 1) && (
+        <UserGroup>
+          Matriz
+          <div />
         </UserGroup>
       )}
     </Wrapper>

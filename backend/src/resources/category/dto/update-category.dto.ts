@@ -5,4 +5,8 @@ export class UpdateCategoryDto {
 	@IsString()
 	@Length(3, 100)
 	name?: string;
+
+	@IsString()
+	@IsOptional()
+	description?: string;
 }

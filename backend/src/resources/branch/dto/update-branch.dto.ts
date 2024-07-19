@@ -21,7 +21,8 @@ export class UpdateBranchDto {
 
 	@IsString()
 	@IsOptional()
-	phone?: number;
+	@Length(1, 20)
+	phone?: string;
 
 	@IsOptional()
 	@IsEmail()
@@ -29,18 +30,18 @@ export class UpdateBranchDto {
 
 	@IsString()
 	@IsOptional()
-	address?: number;
+	address?: string;
 
 	@IsString()
 	@IsOptional()
-	city?: number;
+	city?: string;
 
 	@IsString()
 	@IsOptional()
-	state?: number;
+	state?: string;
 
 	@IsString()
 	@IsOptional()
 	@Transform((value) => value.value.replace(/\D/g, ""))
-	zipCode?: number;
+	zipCode?: string;
 }

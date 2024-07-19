@@ -67,8 +67,9 @@ export default function Sidenav({ isMobile = false, sidenavOpen = true, setSiden
         },
         {
           icon: <i className="bi bi-arrow-left-right" />,
-          title: "Trocar de curso",
+          title: "Trocar de filial",
           onClick: () => dispatch(defaultCourse(null)),
+          permissions: [2],
         },
         {
           icon: <i className="bi bi-box-arrow-right" />,
@@ -128,29 +129,24 @@ export default function Sidenav({ isMobile = false, sidenavOpen = true, setSiden
         },
         {
           icon: <i className="bi bi-person-workspace" />,
-          title: "Coordenadores",
-          route: "/usuarios/coordenadores",
+          title: "Administradores",
+          route: "/usuarios/administradores",
         },
         {
           icon: <i className="bi bi-person-badge" />,
-          title: "Secretários",
-          route: "/usuarios/secretarios",
-        },
-        {
-          icon: <i className="bi bi-people" />,
-          title: "Alunos",
-          route: "/usuarios/alunos",
+          title: "Funcionários",
+          route: "/usuarios/funcionarios",
         },
       ],
       permissions: [1],
     },
     {
-      title: "Cursos",
+      title: "Filiais",
       links: [
         {
-          icon: <i className="bi bi-mortarboard-fill" />,
-          title: "Listagem de cursos",
-          route: "/cursos",
+          icon: <i className="bi bi-building-fill" />,
+          title: "Listagem de filiais",
+          route: "/filiais",
         },
       ],
       permissions: [1],
@@ -199,7 +195,7 @@ export default function Sidenav({ isMobile = false, sidenavOpen = true, setSiden
       <div>
         {!isMobile &&
           <LogoWrapper>
-            {sidenavOpen && <Logo src={`${process.env.basePath}/img/full-logo.png`} />}
+            {sidenavOpen && <Logo src={`${process.env.img}/full-logo.png`} />}
             <Burger
               onClick={() => toggleSidenavOpen()}>
               <i className={"bi bi-list"} />

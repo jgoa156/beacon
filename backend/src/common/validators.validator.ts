@@ -2,7 +2,12 @@ import {
 	ValidatorConstraint,
 	ValidatorConstraintInterface,
 } from "class-validator";
-import { Statuses, UserTypes } from "./enums.enum";
+import {
+	UserTypes,
+	OrderActionTypes,
+	StatusTypes,
+	PriorityTypes,
+} from "./constants.constants";
 
 @ValidatorConstraint({ name: "IsCNPJ", async: false })
 export class IsCNPJ implements ValidatorConstraintInterface {
@@ -82,24 +87,63 @@ export class IsCPF implements ValidatorConstraintInterface {
 	}
 }
 
+function buildValidValuesString(keys: any[]) {
+	const keysLength = keys.length;
+	let string = "";
+
+	keys.forEach((key, index) => {
+		string += index + 1 == keysLength ? `'${key}', ` : `or '${key}'`;
+	});
+}
+
 @ValidatorConstraint({ name: "IsUserType", async: false })
 export class IsUserType implements ValidatorConstraintInterface {
 	validate(type: string) {
-		return Object.values<string>(UserTypes).includes(type);
+		return Object.keys(UserTypes).includes(type);
 	}
 
 	defaultMessage() {
-		return "Invalid user type (must be either 'Coordenador', 'Secretário' or 'Aluno')";
+		return `Invalid user type (must be either ${buildValidValuesString(
+			Object.keys(UserTypes),
+		)})`;
 	}
 }
 
-@ValidatorConstraint({ name: "IsStatus", async: false })
-export class IsStatus implements ValidatorConstraintInterface {
+@ValidatorConstraint({ name: "IsOrderActionType", async: false })
+export class IsOrderAction implements ValidatorConstraintInterface {
 	validate(type: string) {
-		return Object.values<string>(Statuses).includes(type);
+		return Object.keys(OrderActionTypes).includes(type);
 	}
 
 	defaultMessage() {
-		return "Invalid status (must be either 'Pendente', 'Pré-aprovado', 'Aprovado', 'Rejeitado')";
+		return `Invalid order action type (must be either ${buildValidValuesString(
+			Object.keys(OrderActionTypes),
+		)})`;
+	}
+}
+
+@ValidatorConstraint({ name: "IsStatusType", async: false })
+export class IsStatusType implements ValidatorConstraintInterface {
+	validate(type: string) {
+		return Object.keys(StatusTypes).includes(type);
+	}
+
+	defaultMessage() {
+		return `Invalid status type (must be either ${buildValidValuesString(
+			Object.keys(StatusTypes),
+		)})`;
+	}
+}
+
+@ValidatorConstraint({ name: "IsPriorityType", async: false })
+export class IsStatus implements ValidatorConstraintInterface {
+	validate(type: string) {
+		return Object.keys(PriorityTypes).includes(type);
+	}
+
+	defaultMessage() {
+		return `Invalid priority type (must be either ${buildValidValuesString(
+			Object.keys(PriorityTypes),
+		)})`;
 	}
 }

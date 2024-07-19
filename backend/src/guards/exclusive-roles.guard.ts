@@ -1,13 +1,13 @@
 import { Injectable, CanActivate, ExecutionContext } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { UserTypes } from "../../src/common/enums.enum";
+import { IConstant } from "src/common/constants.constants";
 
 @Injectable()
 export class ExclusiveRolesGuard implements CanActivate {
 	constructor(private reflector: Reflector) {}
 
 	canActivate(context: ExecutionContext): boolean {
-		const requiredRoles = this.reflector.get<UserTypes[]>(
+		const requiredRoles = this.reflector.get<IConstant[]>(
 			"roles",
 			context.getHandler(),
 		);

@@ -3,34 +3,30 @@ import {
 	IsString,
 	IsEmail,
 	Validate,
-	IsInt,
 	IsNotEmpty,
 	IsOptional,
 	Allow,
+	IsArray,
 } from "class-validator";
-import { IsCPF } from "../../../../src/common/validators.validator";
+import { IsUserType } from "../../../../src/common/validators.validator";
 
 export class CreateUserDto {
+	@IsOptional()
 	@IsString()
-	@IsNotEmpty()
 	name: string;
 
+	@IsOptional()
 	@IsEmail()
-	@IsNotEmpty()
 	email: string;
 
+	@IsNotEmpty()
 	@IsString()
+	@Transform((value) => value.value.toUpperCase())
+	@Validate(IsUserType)
+	userType: string;
+
 	@IsOptional()
+	@IsArray()
 	@Allow()
-	@Validate(IsCPF)
-	@Transform((value) => value.value.replace(/\D/g, ""))
-	cpf?: string | null;
-
-	@IsInt()
-	@IsNotEmpty()
-	userTypeId: number;
-
-	@IsString()
-	@IsNotEmpty()
-	password?: string;
+	branchesIds?: number[];
 }

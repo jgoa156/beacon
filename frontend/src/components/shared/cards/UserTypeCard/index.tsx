@@ -16,7 +16,6 @@ import {
   Options,
   Marker,
 } from "./styles";
-import { UserTypeIcons } from "constants/userTypeIcons.constants";
 
 // Interfaces
 export interface IUserType {
@@ -38,10 +37,15 @@ export default function UserTypeCard({
   marked = false,
   blurred = false,
 }: IUserTypeCard) {
+  const userTypeIcons = {
+    "Funcionário": "person-badge",
+    "Administrador": "person-workspace",
+  };
+
   function CardBody({ userType, marked, blurred }: IUserTypeCard) {
     return (
       <Wrapper marked={marked} blurred={blurred}>
-        <H4>{<i className={`bi bi-${UserTypeIcons[userType.name]}`} />}{userType.name}</H4>
+        <H4>{<i className={`bi bi-${userTypeIcons[userType.name]}`} />}{userType.name}</H4>
 
         {marked && (
           <Marker>

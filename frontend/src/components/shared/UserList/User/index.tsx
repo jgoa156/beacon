@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Dropdown, OverlayTrigger, ProgressBar, Tooltip } from "react-bootstrap";
-import { formatCpf } from "utils";
+import { useState } from "react";
+import { Dropdown, OverlayTrigger, Tooltip } from "react-bootstrap";
 
 // Custom
 import {
@@ -13,25 +12,13 @@ import {
   CustomFormCheck,
   CheckboxPreventClick,
   UserStatus,
-  CopyToClipboardSpan,
 } from "./styles";
 import Spinner from "components/shared/Spinner";
 
 // Interfaces
-interface IUser {
-  id: number;
-  isActive: boolean;
-  name: string;
-  email: string;
-  cpf: string;
-  enrollment?: string;
-  courses: any[];
-  workloadCount?: any[];
-}
-
+import IUser from "interfaces/IUser";
 interface IUserProps {
   user?: IUser | null;
-  courseId?: number | null | undefined;
   subRoute?: string;
   loading?: boolean;
   header?: boolean;
@@ -46,7 +33,6 @@ interface IUserProps {
 
 export default function User({
   user = null,
-  courseId = null,
   subRoute = "",
   loading = false,
   header = false,
@@ -116,87 +102,14 @@ export default function User({
     }
   }
 
-  // Courses column
-  function CoursesColumnTooltip({ courses }) {
+  // Branches column
+  function BranchesColumnTooltip({ branches }) {
     return (
       <>
-        {courses.map((course, index) => <p key={index} style={{ margin: 0 }}>{course.name}</p>)}
+        {branches.map((branch, index) => <p key={index} style={{ margin: 0 }}>{branch.name}</p>)}
       </>
     );
   }
-
-  // Copy to clipboard
-  function CopyToClipboard({ text }) {
-    const [copied, setCopied] = useState(false);
-    const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    function copyToClipboard() {
-      navigator.clipboard.writeText(text).then(() => {
-        setCopied(true);
-        timeout.current = setTimeout(() => setCopied(false), 2000);
-      });
-    }
-
-    useEffect(() => {
-      return () => {
-        if (timeout.current !== null) {
-          clearTimeout(timeout.current);
-        }
-      };
-    }, []);
-
-    return (
-      <OverlayTrigger placement="bottom" overlay={<Tooltip>{`${text} (${copied ? "Copiado!" : "Clique para copiar"})`}</Tooltip>}>
-        <CopyToClipboardSpan onClick={copyToClipboard}>
-          {text}
-          <i className="bi bi-copy" />
-        </CopyToClipboardSpan>
-      </OverlayTrigger>
-    );
-  }
-
-  const CustomProgressBar = ({ current, max }) => {
-    const progress = (current / max) * 100;
-
-    return (
-      <OverlayTrigger placement="bottom" overlay={<Tooltip>{`${current}h de ${max}h`}</Tooltip>}>
-        <ProgressBar
-          animated
-          now={current === 0 ? 100 : progress}
-          label={current === 0 ? `0/0` : `${current}/${max}`}
-          variant={current === 0 ? "secondary" : "success"}
-          style={{
-            borderRadius: "8px",
-            height: "15px",
-            backgroundColor: "#F1F1F1",
-          }}
-        />
-      </OverlayTrigger>
-    );
-  };
-
-  function WorkloadProgressBars({ workloadCount }) {
-    return (
-      <>
-        <Column><CustomProgressBar current={workloadCount["Ensino"].totalWorkload} max={workloadCount["Ensino"].maxWorkload} /></Column>
-        <Column><CustomProgressBar current={workloadCount["Pesquisa"].totalWorkload} max={workloadCount["Pesquisa"].maxWorkload} /></Column>
-        <Column><CustomProgressBar current={workloadCount["Extensao"].totalWorkload} max={workloadCount["Extensao"].maxWorkload} /></Column>
-      </>
-    )
-  }
-
-  // Column value helpers
-  function getEnrollment(user) {
-    const course = user?.courses.find((course) => course.id === courseId);
-    if (!course?.enrollment) return "-";
-    return course?.enrollment;
-  }
-  const enrollment = getEnrollment(user);
-
-  function getCpf(user) {
-    return user?.cpf ? formatCpf(user?.cpf) : "-"
-  }
-  const cpf = getCpf(user);
 
   return (
     header
@@ -210,29 +123,18 @@ export default function User({
           onClick={(e) => handleCheck(e)}
         />
         <Column color={"var(--muted)"}>Nome</Column>
-        {subRoute == "alunos"
-          ? <>
-            <Column color={"var(--muted)"}>Matrícula</Column>
-            <Column color={"var(--muted)"}>Horas (Ensino)</Column>
-            <Column color={"var(--muted)"}>Horas (Pesquisa)</Column>
-            <Column color={"var(--muted)"}>Horas (Extensão)</Column>
-          </>
-          : <>
-            <Column color={"var(--muted)"}>Email</Column>
-            <Column color={"var(--muted)"}>Curso(s)</Column>
-            {/*<Column color={"var(--muted)"}>CPF</Column>*/}
-          </>
-        }
+        <Column color={"var(--muted)"}>Email</Column>
+        <Column color={"var(--muted)"}>Filiais</Column>
         <Column color={"var(--muted)"}>Status</Column>
       </Item>
       : loading
-        ? <Item student={subRoute === "alunos"}>
+        ? <Item>
           <div></div>
-          {Array.from(Array(subRoute === "alunos" ? 5 : 3).keys()).map((i) => <Column key={i} className={"placeholder-wave"}><span className={"placeholder col-md-8 col-12"}></span></Column>)}
+          {Array.from(Array(3).keys()).map((i) => <Column key={i} className={"placeholder-wave"}><span className={"placeholder col-md-8 col-12"}></span></Column>)}
           <div></div>
         </Item >
         : (//<Link href={`/usuarios/${subRoute}/${user?.id}`} passHref><a>
-          <Item Item student={subRoute === "alunos"}>
+          <Item>
             <CustomFormCheck
               inline
               name="users"
@@ -247,43 +149,27 @@ export default function User({
               </OverlayTrigger>
             </Column>
 
-            {subRoute == "alunos"
-              ? <>
-                <Column>
-                  <CopyToClipboard text={enrollment} />
-                </Column>
-                <WorkloadProgressBars workloadCount={user?.workloadCount} />
-              </>
-              : <>
-                <Column>
-                  <OverlayTrigger placement="bottom" overlay={<Tooltip>{user?.email}</Tooltip>}>
-                    <span>{user?.email}</span>
-                  </OverlayTrigger>
-                </Column>
+            <Column>
+              <OverlayTrigger placement="bottom" overlay={<Tooltip>{user?.email}</Tooltip>}>
+                <span>{user?.email}</span>
+              </OverlayTrigger>
+            </Column>
 
-                <Column>
-                  <OverlayTrigger placement="bottom" overlay={<Tooltip><CoursesColumnTooltip courses={user?.courses} /></Tooltip>}>
-                    <span>
-                      {user?.courses[0]?.name
-                        ? (<div className="text-with-ribbon">
-                          <span>{user?.courses[0]?.name}</span>
-                          {(user?.courses && user?.courses?.length > 1) &&
-                            <Ribbon>+{user?.courses?.length - 1}</Ribbon>
-                          }
-                        </div>)
-                        : "-"
+            <Column>
+              <OverlayTrigger placement="bottom" overlay={<Tooltip><BranchesColumnTooltip branches={user?.branches} /></Tooltip>}>
+                <span>
+                  {user?.branches[0]?.name
+                    ? (<div className="text-with-ribbon">
+                      <span>{user?.branches[0]?.name}</span>
+                      {(user?.branches && user?.branches?.length > 1) &&
+                        <Ribbon>+{user?.branches?.length - 1}</Ribbon>
                       }
-                    </span>
-                  </OverlayTrigger>
-                </Column>
-
-                {/*<Column>
-                    <OverlayTrigger placement="bottom" overlay={<Tooltip>{cpf}</Tooltip>}>
-                      <span>{cpf}</span>
-                    </OverlayTrigger>
-                  </Column>*/}
-              </>
-            }
+                    </div>)
+                    : "-"
+                  }
+                </span>
+              </OverlayTrigger>
+            </Column>
 
             <Column>
               <UserStatus status={user?.isActive}>{user?.isActive === true ? "Ativo" : "Inativo"}</UserStatus>

@@ -1,34 +1,12 @@
-import { Type } from "class-transformer";
+import { Transform } from "class-transformer";
 import {
-	IsString,
 	IsInt,
+	IsString,
 	Length,
-	Min,
-	Max,
 	IsNotEmpty,
-	ValidateNested,
 	IsOptional,
+	IsNumber,
 } from "class-validator";
-
-class ActivityGroups {
-	@IsInt()
-	@IsNotEmpty()
-	@Min(1)
-	@Max(300)
-	education: number;
-
-	@IsInt()
-	@IsNotEmpty()
-	@Min(1)
-	@Max(300)
-	research: number;
-
-	@IsInt()
-	@IsNotEmpty()
-	@Min(1)
-	@Max(300)
-	extension: number;
-}
 
 export class CreateProductDto {
 	@IsString()
@@ -36,25 +14,22 @@ export class CreateProductDto {
 	@Length(3, 100)
 	name: string;
 
+	@IsInt()
+	@IsNotEmpty()
+	@Transform((value) => parseInt(value.value))
+	categoryId: number;
+
 	@IsString()
 	@IsNotEmpty()
-	@Length(2, 10)
-	code: string;
+	@Length(1, 20)
+	unitMeasure: string;
 
-	@IsInt()
-	@IsNotEmpty()
-	@Min(1)
-	@Max(16)
-	periods: number;
-
+	@IsNumber()
 	@IsOptional()
-	@IsInt()
-	@Min(1)
-	@Max(500)
-	minWorkload: number;
+	@Transform((value) => parseFloat(value.value))
+	unitValue?: number;
 
-	@IsNotEmpty()
-	@ValidateNested()
-	@Type(() => ActivityGroups)
-	activityGroupsWorkloads: ActivityGroups;
+	@IsString()
+	@IsOptional()
+	description?: string;
 }

@@ -11,12 +11,9 @@ import { JwtService } from "@nestjs/jwt";
 import { UserService } from "../user/user.service";
 import * as bcrypt from "bcrypt";
 import * as uuid from "uuid";
-import { SignUpDto } from "./dto/sign-up.dto";
-import { UserTypes } from "../../../src/common/constants.constants";
 import { LoginDto } from "./dto";
 import { Response } from "express";
 import { BranchService } from "../branch/branch.service";
-import { BranchUserService } from "../branchUser/branchUser.service";
 import { getFilesLocation, getFirstName, sendEmail } from "../utils";
 
 @Injectable()
@@ -25,8 +22,7 @@ export class AuthService {
 		@Inject(forwardRef(() => UserService))
 		private userService: UserService,
 
-		private courseService: BranchService,
-		private courseUserService: BranchUserService,
+		private branchService: BranchService,
 		private jwtService: JwtService,
 	) {}
 
@@ -99,7 +95,7 @@ export class AuthService {
 
 	async login(loginDto: LoginDto, res: Response) {
 		const user = await this.validateUser(loginDto.email, loginDto.password);
-		const branches = await this.courseService.findBranchesByUser(user.id);
+		const branches = await this.branchService.findBranchesByUserId(user.id);
 
 		// Generating tokens
 		await this.setAuthorizationHeader(user, res);
@@ -128,7 +124,7 @@ export class AuthService {
 		resetTokenExpires.setHours(resetTokenExpires.getHours() + expireHours); // Token expires in 1 hour by default
 
 		// Save resetToken and resetTokenExpires in user record
-		await this.userService.update(user.id, {
+		await this.userService.dangerUpdate(user.id, {
 			resetToken,
 			resetTokenExpires,
 		});
@@ -181,7 +177,7 @@ export class AuthService {
 			throw new BadRequestException("Invalid or expired token");
 
 		const hashedPassword = bcrypt.hashSync(password, 10);
-		await this.userService.update(user.id, {
+		await this.userService.dangerUpdate(user.id, {
 			password: hashedPassword,
 			resetToken: null,
 			resetTokenExpires: null,

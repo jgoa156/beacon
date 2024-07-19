@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { BranchUser } from "@prisma/client";
-import { CreateBranchUserDto, UpdateBranchUserDto } from "./dto";
+import { CreateBranchUserDto } from "./dto";
 
 @Injectable()
 export class BranchUserService {
@@ -16,52 +16,41 @@ export class BranchUserService {
 		return this.prisma.branchUser.findMany();
 	}
 
-	findById(id: number): Promise<BranchUser | null> {
-		return this.prisma.branchUser.findUnique({ where: { id } });
-	}
-
-	findByEnrollment(
-		enrollment: string,
-		excludeId: number = 0,
-	): Promise<BranchUser | null> {
-		return this.prisma.branchUser.findFirst({
-			where: { enrollment, id: { not: excludeId } },
-		});
-	}
-
-	async findByUserIdAndBranchId(
+	findByUserIdAndBranchId(
 		userId: number,
-		courseId: number,
+		branchId: number,
 	): Promise<BranchUser | null> {
-		return await this.prisma.branchUser.findFirst({
-			where: { userId, courseId },
+		return this.prisma.branchUser.findUnique({
+			where: { id: { userId, branchId } },
 		});
 	}
 
-	async update(
-		id: number,
-		updateBranchUserDto: UpdateBranchUserDto,
+	async linkUserToBranch(
+		userId: number,
+		branchId: number,
 	): Promise<BranchUser> {
-		return await this.prisma.branchUser.update({
-			where: { id },
-			data: updateBranchUserDto,
-		});
+		const branchUser = await this.findByUserIdAndBranchId(userId, branchId);
+
+		if (branchUser) return branchUser;
+
+		return await this.create({ userId, branchId });
 	}
 
-	async unlinkUserFromBranch(userId: number, courseId: number): Promise<any> {
-		const branchUser = await this.findByUserIdAndBranchId(userId, courseId);
+	async unlinkUserFromBranch(userId: number, branchId: number): Promise<any> {
+		const branchUser = await this.findByUserIdAndBranchId(userId, branchId);
 
-		if (!branchUser)
-			throw new BadRequestException("User not enrolled in course");
+		if (!branchUser) throw new BadRequestException("User not linked to branch");
 
 		return await this.prisma.branchUser.delete({
 			where: {
-				id: branchUser.id,
+				id: { userId, branchId },
 			},
 		});
 	}
 
-	remove(id: number): Promise<BranchUser> {
-		return this.prisma.branchUser.delete({ where: { id } });
+	remove(userId: number, branchId: number): Promise<BranchUser> {
+		return this.prisma.branchUser.delete({
+			where: { id: { userId, branchId } },
+		});
 	}
 }

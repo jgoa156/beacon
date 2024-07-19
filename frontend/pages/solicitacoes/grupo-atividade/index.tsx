@@ -14,6 +14,7 @@ import { IRootState } from "redux/store";
 import IUserLogged from "interfaces/IUserLogged";
 import { DefaultWrapper } from "components/shared/Wrapper/styles";
 import { H3 } from "components/shared/Titles";
+import { restrictPageForLoggedUsers } from "utils";
 
 export default function SolicitacoesGruposAtividades() {
   const router = useRouter();
@@ -35,13 +36,7 @@ export default function SolicitacoesGruposAtividades() {
 
   // Verifying user
   useEffect(() => {
-    if (!user.logged) {
-      router.replace("/entrar");
-    } else if (user.selectedCourse == null) {
-      router.replace("/conta/curso");
-    } else {
-      setTimeout(() => setLoaded(true), 250);
-    }
+    restrictPageForLoggedUsers(user, router, setLoaded);
   }, [user]);
 
   return (

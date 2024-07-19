@@ -6,17 +6,10 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { User } from "@prisma/client";
-import { AddUserDto, CreateUserDto, UpdateUserDto } from "./dto";
-import { UserTypeService } from "../userType/userType.service";
-import { UserTypes } from "../../../src/common/enums.enum";
-import { BranchService } from "../course/course.service";
-import { BranchUserService } from "../courseUser/courseUser.service";
-import { BranchActivityGroupService } from "../courseActivityGroup/courseActivityGroup.service";
-import {
-	StatusOrders,
-	UserTypeIds,
-} from "../../../src/common/constants.constants";
-import { EnrollDto } from "./dto/enroll.dto";
+import { CreateUserDto, UpdateUserDto } from "./dto";
+import { BranchService } from "../branch/branch.service";
+import { BranchUserService } from "../branchUser/branchUser.service";
+import { UserTypes } from "../../../src/common/constants.constants";
 import {
 	decodeToken,
 	getFilesLocation,
@@ -27,15 +20,14 @@ import {
 import { AuthService } from "../auth/auth.service";
 import * as fs from "fs";
 import * as sharp from "sharp";
+import { DangerUpdateUserDto } from "./dto/dangerUpdate-user.dto";
 
 @Injectable()
 export class UserService {
 	constructor(
 		private prisma: PrismaService,
-		private userTypeService: UserTypeService,
-		private courseService: BranchService,
-		private courseActivityGroupService: BranchActivityGroupService,
-		private courseUserService: BranchUserService,
+		private branchService: BranchService,
+		private branchUserService: BranchUserService,
 
 		@Inject(forwardRef(() => AuthService))
 		private authService: AuthService,
@@ -43,19 +35,16 @@ export class UserService {
 
 	async updateSearchHash(id: number) {
 		const user = await this.findById(id);
-		const branches = await this.courseService.findBranchesByUser(id);
+		const branches = await this.branchService.findBranchesByUserId(id);
 
 		const searchHash = [];
 
 		searchHash.push(user.id);
 		searchHash.push(user.name);
 		searchHash.push(user.email);
-		searchHash.push(user.cpf);
 
-		branches.forEach((course) => {
-			searchHash.push(course.name);
-			searchHash.push(course.enrollment);
-			searchHash.push(course.startYear);
+		branches.forEach((branch) => {
+			searchHash.push(branch.name);
 		});
 
 		await this.prisma.user.update({
@@ -64,70 +53,36 @@ export class UserService {
 		});
 	}
 
-	async addUser(addUserDto: AddUserDto, token: string = ""): Promise<any> {
-		if (await this.findByEmail(addUserDto.email)) {
+	async create(createUserDto: CreateUserDto, token: string = ""): Promise<any> {
+		if (await this.findByEmail(createUserDto.email)) {
 			throw new BadRequestException("Email already in use");
 		}
-		if (addUserDto.cpf && (await this.findByCpf(addUserDto.cpf))) {
-			throw new BadRequestException("CPF already in use");
-		}
-		if (
-			addUserDto.courseId &&
-			!(await this.courseService.findById(addUserDto.courseId))
-		) {
-			throw new BadRequestException("Branch not found");
-		}
-		if (addUserDto.branchesIds) {
-			for (const _courseId of addUserDto.branchesIds) {
-				if (!(await this.courseService.findById(_courseId))) {
-					throw new BadRequestException(`Branch (id: ${_courseId}) not found`);
+		if (createUserDto.branchesIds) {
+			for (const _branchId of createUserDto.branchesIds) {
+				if (!(await this.branchService.findById(_branchId))) {
+					throw new BadRequestException(`Branch (id: ${_branchId}) not found`);
 				}
 			}
 		}
-		if (
-			addUserDto.enrollment &&
-			(await this.courseUserService.findByEnrollment(addUserDto.enrollment))
-		) {
-			throw new BadRequestException("Enrollment already in use");
-		}
 
-		const {
-			branchesIds,
-			courseId,
-			enrollment,
-			startYear,
-			password,
-			userType,
-			..._addUserDto
-		} = addUserDto;
+		const { branchesIds, userType, ..._createUserDto } = createUserDto;
 
 		// Registering user
-		const userCreated = await this.create({
-			..._addUserDto,
-			cpf: addUserDto.cpf ? addUserDto.cpf.replace(/\D/g, "") : null,
-			password: password ? password : null,
-			userTypeId: UserTypeIds[userType],
+		const userCreated = await this.prisma.user.create({
+			data: {
+				..._createUserDto,
+				password: null,
+				userTypeId: UserTypes[userType].id,
+			},
 		});
 
-		if (userType === UserTypes.STUDENT) {
-			// Registering course
-			await this.courseUserService.create({
-				courseId,
-				enrollment,
-				startYear,
+		// Registering branches
+		branchesIds.forEach(async (_branchId) => {
+			await this.branchUserService.create({
+				branchId: _branchId,
 				userId: userCreated.id,
 			});
-		} else {
-			// Registering branches
-			branchesIds.forEach(async (_courseId) => {
-				await this.courseUserService.create({
-					courseId: _courseId,
-					userId: userCreated.id,
-					enrollment: null,
-					startYear: null,
-				});
-			});
-		}
+		});
 
 		const userResponsible = await this.findById((decodeToken(token) as any).id);
 		if (userResponsible) {
@@ -140,8 +95,8 @@ export class UserService {
 			await this.sendWelcomeEmail(userResponsible, userCreated, resetToken);
 		}
 
-		const branches = await this.courseService
-			.findBranchesByUser(userCreated.id)
+		const branches = await this.branchService
+			.findBranchesByUserId(userCreated.id)
 			.then(() => this.updateSearchHash(userCreated.id));
 
 		return {
@@ -160,231 +115,55 @@ export class UserService {
 		userCreated: any,
 		resetToken: string,
 	): Promise<void> {
-		const userType = UserTypeIds[userResponsible.userTypeId].toLowerCase();
-		const userCreatedType = UserTypeIds[userCreated.userTypeId].toLowerCase();
+		const userType = UserTypes[userResponsible.userTypeId].name.toLowerCase();
+		const userCreatedType =
+			UserTypes[userCreated.userTypeId].name.toLowerCase();
 
 		await sendEmail(
 			userCreated.email,
-			"Bem vindo ao Pyramid!",
+			"Bem vindo ao Beacon!",
 			`Olá, ${getFirstName(
 				userCreated.name,
 			)}! Você foi adicionado como ${userCreatedType} na nossa plataforma pelo ${userType} ${getFirstAndLastName(
 				userResponsible.name,
 			)}. 
-      Para configurar sua senha e começar a gerenciar suas atividades extracurriculares, clique no link a seguir: ${
+      Para configurar sua senha e começar a gerenciar ordens de compra, clique no link a seguir: ${
 				process.env.FRONTEND_URL
 			}/conta/senha?token=${resetToken}`,
 		);
 	}
 
-	async create(createUserDto: CreateUserDto): Promise<any> {
-		const user = await this.prisma.user.create({ data: createUserDto });
-		const userType = await this.userTypeService.findById(
-			createUserDto.userTypeId,
-		);
-		return { ...user, userType };
-	}
-
-	async enroll(
-		userId: number,
-		courseId: number,
-		enrollDto: EnrollDto,
-	): Promise<any> {
+	async assign(userId: number, branchId: number): Promise<any> {
 		const user = await this.findById(userId);
 		if (!user) throw new BadRequestException("User not found");
-		const course = await this.courseService.findById(courseId);
-		if (!course) throw new BadRequestException("Branch not found");
+		const branch = await this.branchService.findById(branchId);
+		if (!branch) throw new BadRequestException("Branch not found");
 
-		const { enrollment, startYear } = enrollDto;
-
-		if (
-			enrollment &&
-			(await this.courseUserService.findByEnrollment(enrollDto.enrollment))
-		) {
-			throw new BadRequestException("Enrollment already in use");
-		}
-
-		await this.courseUserService
+		await this.branchUserService
 			.create({
 				userId,
-				courseId,
-				enrollment: enrollment ? enrollment : null,
-				startYear: startYear ? startYear : null,
+				branchId,
 			})
 			.then(() => this.updateSearchHash(userId));
 
-		return await this.courseService.findBranchesByUser(user.id);
+		return await this.branchService.findBranchesByUserId(user.id);
 	}
 
-	async updateEnrollment(
-		userId: number,
-		courseId: number,
-		enrollDto: EnrollDto,
-	): Promise<any> {
+	async unassign(userId: number, branchId: number): Promise<any> {
 		const user = await this.findById(userId);
 		if (!user) throw new BadRequestException("User not found");
-		const course = await this.courseService.findById(courseId);
-		if (!course) throw new BadRequestException("Branch not found");
+		const branch = await this.branchService.findById(branchId);
+		if (!branch) throw new BadRequestException("Branch not found");
 
-		const { enrollment, startYear } = enrollDto;
-
-		const courseUser = await this.courseUserService.findByUserIdAndBranchId(
-			userId,
-			courseId,
-		);
-		if (!courseUser)
-			throw new BadRequestException("User not enrolled in course");
-
-		if (
-			enrollment &&
-			(await this.courseUserService.findByEnrollment(
-				enrollDto.enrollment,
-				courseUser.id,
-			))
-		) {
-			throw new BadRequestException("Enrollment already in use");
-		}
-
-		await this.courseUserService
-			.update(courseUser.id, {
-				enrollment,
-				startYear,
-			})
+		await this.branchUserService
+			.unlinkUserFromBranch(userId, branchId)
 			.then(() => this.updateSearchHash(userId));
 
-		return await this.courseService.findBranchesByUser(user.id);
-	}
-
-	async unenroll(userId: number, courseId: number): Promise<any> {
-		const user = await this.findById(userId);
-		if (!user) throw new BadRequestException("User not found");
-		const course = await this.courseService.findById(courseId);
-		if (!course) throw new BadRequestException("Branch not found");
-
-		await this.courseUserService
-			.unlinkUserFromBranch(userId, courseId)
-			.then(() => this.updateSearchHash(userId));
-
-		return await this.courseService.findBranchesByUser(user.id);
-	}
-
-	async groupAndCountWorkload(orders: any[], courseId: number) {
-		const activityGroups =
-			await this.courseActivityGroupService.findByBranchId(+courseId);
-
-		const workloadCount = { totalWorkload: 0 };
-		activityGroups.forEach((_activityGroup) => {
-			workloadCount[_activityGroup?.ActivityGroup?.name] = {
-				maxWorkload: _activityGroup.maxWorkload,
-				totalWorkload: 0,
-			};
-		});
-
-		orders.forEach((order) => {
-			const { BranchActivityGroup } = order.Activity;
-			const { ActivityGroup, Branch } = BranchActivityGroup;
-
-			if (courseId == Branch.id && order.status == StatusOrders["Aprovado"]) {
-				if (!workloadCount[ActivityGroup.name]) {
-					workloadCount[ActivityGroup.name] = {
-						maxWorkload: BranchActivityGroup.maxWorkload,
-						totalWorkload: 0,
-					};
-				}
-
-				workloadCount[ActivityGroup.name].totalWorkload += order.workload;
-			}
-		});
-
-		workloadCount.totalWorkload = Object.values(workloadCount).reduce(
-			(acc, activity) => {
-				if (
-					typeof activity === "object" &&
-					activity &&
-					(activity as { maxWorkload?: number; totalWorkload?: number })
-						?.totalWorkload
-				) {
-					return (
-						acc +
-						(activity as { maxWorkload?: number; totalWorkload?: number })
-							?.totalWorkload
-					);
-				}
-				return acc;
-			},
-			0,
-		);
-
-		return workloadCount;
-	}
-
-	async getUserReport(userId: number, courseId: number) {
-		const user = await this.findById(userId);
-		if (!user) throw new BadRequestException("User not found");
-
-		const orders = await this.prisma.order.findMany({
-			where: { userId },
-			include: {
-				Activity: {
-					include: {
-						BranchActivityGroup: {
-							include: {
-								Branch: {
-									select: { id: true, code: true, name: true },
-								},
-								ActivityGroup: {
-									select: { name: true },
-								},
-							},
-						},
-					},
-				},
-			},
-		});
-
-		const course = await this.courseService.findById(courseId);
-		const courseOrders = orders.filter(
-			(order) => order.Activity.BranchActivityGroup.Branch.id === courseId,
-		);
-
-		const totalOrders = courseOrders.length;
-		const pendingOrders = courseOrders.filter(
-			(order) => order.status === StatusOrders["Submetido"],
-		).length;
-		const preApprovedOrders = courseOrders.filter(
-			(order) => order.status === StatusOrders["Pré-aprovado"],
-		).length;
-		const approvedOrders = courseOrders.filter(
-			(order) => order.status === StatusOrders["Aprovado"],
-		).length;
-		const rejectedOrders = courseOrders.filter(
-			(order) => order.status === StatusOrders["Rejeitado"],
-		).length;
-
-		const workloadCount = await this.groupAndCountWorkload(
-			courseOrders,
-			courseId,
-		);
-
-		return {
-			user: {
-				...user,
-				profileImage: user.profileImage
-					? `${getFilesLocation("profile-images")}/${user.profileImage}`
-					: null,
-			},
-			course,
-			workloadCount,
-			totalOrders,
-			pendingOrders,
-			preApprovedOrders,
-			approvedOrders,
-			rejectedOrders,
-		};
+		return await this.branchService.findBranchesByUserId(user.id);
 	}
 
 	async findAll(query: any): Promise<any> {
-		const { page, limit, search, type, courseId, active } = query;
+		const { page, limit, search, type, branchId, active } = query;
 		const skip = (page - 1) * limit;
 		const where =
 			search && search.trim() !== ""
@@ -401,10 +180,10 @@ export class UserService {
 				userTypesArray.indexOf(type.toString().toLowerCase()) + 1;
 		}
 
-		if (courseId && !isNaN(parseInt(courseId))) {
+		if (branchId && !isNaN(parseInt(branchId))) {
 			where["BranchUsers"] = {
 				some: {
-					courseId: parseInt(courseId),
+					branchId: parseInt(branchId),
 				},
 			};
 		}
@@ -419,28 +198,9 @@ export class UserService {
 				skip: skip ? skip : undefined,
 				take: limit ? parseInt(limit) : undefined,
 				include: {
-					UserType: { select: { id: true, name: true } },
-					BranchUsers: {
+					BranchesUser: {
 						include: {
 							Branch: { select: { id: true, name: true } },
-						},
-					},
-					Orders: {
-						include: {
-							Activity: {
-								include: {
-									BranchActivityGroup: {
-										include: {
-											Branch: {
-												select: { id: true, code: true, name: true },
-											},
-											ActivityGroup: {
-												select: { name: true },
-											},
-										},
-									},
-								},
-							},
 						},
 					},
 				},
@@ -452,11 +212,9 @@ export class UserService {
 
 		const _users = await Promise.all(
 			users.map(async (user) => {
-				const branches = user.BranchUsers.map((courseUser) => ({
-					id: courseUser.Branch.id,
-					name: courseUser.Branch.name,
-					enrollment: courseUser.enrollment,
-					startYear: courseUser.startYear,
+				const branches = user.BranchesUser.map((branchUser) => ({
+					id: branchUser.Branch.id,
+					name: branchUser.Branch.name,
 				}));
 
 				return {
@@ -465,15 +223,9 @@ export class UserService {
 						? `${getFilesLocation("profile-images")}/${user.profileImage}`
 						: null,
 					branches,
-					BranchUsers: undefined,
+					BranchesUser: undefined,
 					password: undefined,
-					userType: user.UserType,
-					UserType: undefined,
-					workloadCount:
-						user.userTypeId === UserTypeIds.Aluno
-							? await this.groupAndCountWorkload(user.Orders, +courseId)
-							: undefined,
-					Orders: undefined,
+					userType: UserTypes[user.userTypeId].name,
 				};
 			}),
 		);
@@ -497,20 +249,11 @@ export class UserService {
 	): Promise<User | null> {
 		const user = await this.prisma.user.findFirst({
 			where: { email, id: { not: excludeId } },
-			include: {
-				UserType: { select: { id: true, name: true } },
-			},
 		});
 		return user;
 	}
 
 	// Used to verify availability
-	async findByCpf(cpf: string, excludeId: number = 0): Promise<User | null> {
-		return await this.prisma.user.findFirst({
-			where: { cpf, id: { not: excludeId } },
-		});
-	}
-
 	async findByResetToken(token: string): Promise<User | null> {
 		return await this.prisma.user.findFirst({
 			where: { resetToken: token, isActive: true },
@@ -523,13 +266,32 @@ export class UserService {
 			(await this.findByEmail(updateUserDto.email, id))
 		)
 			throw new BadRequestException("Email already in use");
-		if (updateUserDto.cpf && (await this.findByCpf(updateUserDto.cpf, id)))
-			throw new BadRequestException("CPF already in use");
 
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const { password, ...user } = await this.prisma.user.update({
 			where: { id },
 			data: updateUserDto,
+		});
+
+		await this.updateSearchHash(id);
+
+		return {
+			...user,
+			profileImage: user.profileImage
+				? `${getFilesLocation("profile-images")}/${user.profileImage}`
+				: null,
+			password: undefined,
+		};
+	}
+
+	async dangerUpdate(
+		id: number,
+		dangerUpdateUserDto: DangerUpdateUserDto,
+	): Promise<any> {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const { password, ...user } = await this.prisma.user.update({
+			where: { id },
+			data: dangerUpdateUserDto,
 		});
 
 		await this.updateSearchHash(id);

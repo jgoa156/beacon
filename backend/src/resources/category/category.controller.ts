@@ -13,7 +13,6 @@ import {
 } from "@nestjs/common";
 import { CategoryService } from "./category.service";
 import { CreateCategoryDto, UpdateCategoryDto } from "./dto";
-import { OrderService } from "../order/order.service";
 import { JwtAuthGuard } from "../../guards/jwt-auth.guard";
 import { Roles } from "../../decorators/roles.decorator";
 import { UserTypes } from "../../../src/common/constants.constants";
@@ -21,10 +20,7 @@ import { ExclusiveRolesGuard } from "../../guards/exclusive-roles.guard";
 
 @Controller("categories")
 export class CategoryController {
-	constructor(
-		private readonly categoryService: CategoryService,
-		private readonly orderService: OrderService,
-	) {}
+	constructor(private readonly categoryService: CategoryService) {}
 
 	@Get()
 	async findAll(
@@ -43,7 +39,7 @@ export class CategoryController {
 		return await this.categoryService.findById(+id);
 	}
 
-	@Get(":id/products")
+	/*@Get(":id/products")
 	@UseGuards(JwtAuthGuard)
 	async findOrdersByCategoryId(
 		@Param("id") id: string,
@@ -60,7 +56,7 @@ export class CategoryController {
 			...query,
 			categoryId: +id,
 		});
-	}
+	}*/
 
 	@Post()
 	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)

@@ -1,5 +1,5 @@
 {
-	"name": "pyramid-api",
+	"name": "beacon-api",
 	"version": "1.0.0",
 	"description": "",
 	"author": "",
@@ -21,7 +21,7 @@
 		"test:cov": "jest --coverage",
 		"test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
 		"test:e2e": "jest --config ./test/jest-e2e.json",
-		"prisma": "docker exec -it pyramid_back npx prisma"
+		"prisma": "docker exec -it beacon_back npx prisma"
 	},
 	"dependencies": {
 		"@nestjs/common": "^10.3.8",

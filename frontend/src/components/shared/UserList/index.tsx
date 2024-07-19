@@ -26,7 +26,6 @@ import Spinner from "../Spinner";
 
 interface IUserListProps {
   title: string;
-  courseId?: number | null | undefined;
   users?: any[];
   loading?: boolean;
   totalPages: number;
@@ -43,7 +42,6 @@ export default function UserList({
   loading,
   totalPages,
   subRoute = "",
-  courseId,
 
   onChange = () => { },
 
@@ -53,17 +51,13 @@ export default function UserList({
   const [checkedIds, setCheckedIds] = useState<number[]>([]);
 
   const subRoutes = {
-    "alunos": {
-      icon: "people",
-      singleTitle: "aluno"
-    },
-    "coordenadores": {
+    "administradores": {
       icon: "person-workspace",
-      singleTitle: "coordenador"
+      singleTitle: "administrador"
     },
-    "secretarios": {
+    "funcionarios": {
       icon: "person-badge",
-      singleTitle: "secretário"
+      singleTitle: "funcionário"
     },
   }
 
@@ -139,7 +133,7 @@ export default function UserList({
     await axios
       .request(options as AxiosRequestConfig)
       .then((response) => {
-        toast.success("Alunos desativados com sucesso.");
+        toast.success("Usuários desativados com sucesso.");
         setCheckedIds([]);
         onChange();
       })
@@ -197,7 +191,6 @@ export default function UserList({
             <User
               key={index}
               user={user}
-              courseId={courseId}
               subRoute={subRoute}
               loading={loading}
 

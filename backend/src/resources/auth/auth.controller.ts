@@ -27,14 +27,6 @@ export class AuthController {
 		return res.send(await this.authService.login(loginDto, res));
 	}
 
-	@Post("sign-up")
-	@UsePipes(
-		new ValidationPipe({ transform: true, skipMissingProperties: false }),
-	)
-	async signUp(@Body() signUpDto: SignUpDto, @Res() res: Response) {
-		return res.send(await this.authService.signUp(signUpDto, res));
-	}
-
 	@Post("refresh-token")
 	async refreshToken(
 		@Headers("Refresh") refreshToken: string,

@@ -4,12 +4,11 @@ export default interface IUserLogged {
 	id: number;
 	name: string;
 	email: string;
-	cpf?: string;
 	userTypeId: number;
 	profileImage: string;
 
-	courses: ICourse[];
-	selectedCourse: ICourse | null;
+	branches: ICourse[];
+	selectedBranch: ICourse | null;
 
 	logged: boolean;
 	token: string;

@@ -1,10 +1,10 @@
 /*---------------------- VARIABLES ----------------------*/
 :root {
-	--primary-color: #22c99f;
-	--primary-color-2: #13cece;
+	--primary-color: #2e9af2;
+	--primary-color-2: #216faf;
 
-	--primary-color-background: #e8f9f5; /* color-mix(in srgb, var(--primary-color) 10%, transparent) */
-	--primary-color-2-background: #e7fafa; /* color-mix(in srgb, var(--primary-color-2) 10%, transparent) */
+	--primary-color-background: #eaf4fd; /* color-mix(in srgb, var(--primary-color) 10%, transparent) */
+	--primary-color-2-background: #e8f0f7; /* color-mix(in srgb, var(--primary-color-2) 10%, transparent) */
 
 	--white-1: #fff;
 	--white-2: #f4f4f8;
@@ -14,8 +14,8 @@
 
 	--background: var(--white-2);
 
-	--success: #2e9af2;
-	--success-hover: #216faf;
+	--success: #22c99f;
+	--success-hover: #13cece;
 	--danger: #fc0356;
 	--danger-hover: #e20f44;
 	--warning: #f5e342;

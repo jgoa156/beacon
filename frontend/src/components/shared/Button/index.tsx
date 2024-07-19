@@ -9,7 +9,7 @@ export const Button = styled.button`
 	padding: 12px 20px;
 
 	color: var(--white-1);
-	background-image: linear-gradient(to right, var(--primary-color) 0%, #2ddabd 51%, var(--primary-color-2) 100%);
+	background-image: linear-gradient(to right, var(--primary-color) 0%, #2e62f2 51%, var(--primary-color-2) 100%);
 	background-size: 200% auto;
 
 	font-size: 1rem;

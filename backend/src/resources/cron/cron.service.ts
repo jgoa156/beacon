@@ -13,12 +13,12 @@ export class CronService {
 
 	initCronJobs() {
 		// Schedule a task to run every day at midnight
-		cron.schedule("0 0 * * *", () => this.clearTmpFolder());
+		/*cron.schedule("0 0 * * *", () => this.clearTmpFolder());
 		cron.schedule("0 0 * * *", () => this.clearUnusedOrderFiles());
-		cron.schedule("0 0 * * *", () => this.clearUnusedProfileImages());
+		cron.schedule("0 0 * * *", () => this.clearUnusedProfileImages());*/
 	}
 
-	clearTmpFolder() {
+	/*clearTmpFolder() {
 		console.log("Clearing tmp folder");
 		const tmpFolderPath = "./public/files/tmp/";
 
@@ -102,5 +102,5 @@ export class CronService {
 				}
 			});
 		});
-	}
+	}*/
 }

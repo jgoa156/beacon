@@ -14,6 +14,7 @@ import FormAddSubmission from "components/shared/forms/FormAddSubmission";
 // Interfaces
 import { IRootState } from "redux/store";
 import IUserLogged from "interfaces/IUserLogged";
+import { restrictPageForLoggedUsers } from "utils";
 
 export default function NovaSolicitacao() {
   const router = useRouter();
@@ -36,13 +37,7 @@ export default function NovaSolicitacao() {
 
   // Verifying user
   useEffect(() => {
-    if (!user.logged) {
-      router.replace("/entrar");
-    } else if (user.selectedCourse == null) {
-      router.replace("/conta/curso");
-    } else {
-      setTimeout(() => setLoaded(true), 250);
-    }
+    restrictPageForLoggedUsers(user, router, setLoaded);
   }, [user]);
 
   return (

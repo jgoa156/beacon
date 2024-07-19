@@ -13,26 +13,14 @@ import {
 } from "@nestjs/common";
 import { BranchService } from "./branch.service";
 import { CreateBranchDto, UpdateBranchDto } from "./dto";
-import { OrderService } from "../order/order.service";
-import { CreateActivityDto } from "../activity/dto";
 import { JwtAuthGuard } from "../../guards/jwt-auth.guard";
 import { Roles } from "../../decorators/roles.decorator";
-import { UserTypes } from "../../../src/common/enums.enum";
+import { UserTypes } from "../../../src/common/constants.constants";
 import { ExclusiveRolesGuard } from "../../guards/exclusive-roles.guard";
 
 @Controller("branches")
 export class BranchController {
-	constructor(
-		private readonly branchService: BranchService,
-		private readonly orderService: OrderService,
-	) {}
-
-	@Get(":id/report")
-	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
-	@Roles(UserTypes.COORDINATOR, UserTypes.SECRETARY)
-	async getBranchReport(@Param("id") id: string) {
-		return await this.branchService.getBranchReport(+id);
-	}
+	constructor(private readonly branchService: BranchService) {}
 
 	@Get()
 	async findAll(
@@ -51,40 +39,9 @@ export class BranchController {
 		return await this.branchService.findById(+id);
 	}
 
-	@Get(":id/orders")
-	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
-	@Roles(UserTypes.COORDINATOR, UserTypes.SECRETARY)
-	async findOrdersByBranchId(
-		@Param("id") id: string,
-		@Query()
-		query: {
-			page: number;
-			limit: number;
-			search: string;
-			activityGroup: string;
-			activity: number;
-		},
-	) {
-		return await this.orderService.findAll({
-			...query,
-			branchId: +id,
-		});
-	}
-
-	@Get(":id/:activityGroupName/activities")
-	async findActivitiesByBranchAndActivityGroup(
-		@Param("id") id: string,
-		@Param("activityGroupName") activityGroupName: string,
-	) {
-		return await this.branchService.findActivitiesByBranchAndActivityGroup(
-			+id,
-			activityGroupName,
-		);
-	}
-
 	@Post()
 	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
-	@Roles(UserTypes.COORDINATOR)
+	@Roles(UserTypes.ADMIN)
 	@UsePipes(
 		new ValidationPipe({ transform: true, skipMissingProperties: false }),
 	)
@@ -92,27 +49,9 @@ export class BranchController {
 		return await this.branchService.create(createBranchDto);
 	}
 
-	@Post(":id/:activityGroupName/activities")
-	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
-	@Roles(UserTypes.COORDINATOR)
-	@UsePipes(
-		new ValidationPipe({ transform: true, skipMissingProperties: false }),
-	)
-	async createActivityByBranchAndActivityGroup(
-		@Param("id") id: string,
-		@Param("activityGroupName") activityGroupName: string,
-		@Body() createActivityDto: CreateActivityDto,
-	) {
-		return await this.branchService.createActivityByBranchAndActivityGroup(
-			+id,
-			activityGroupName,
-			createActivityDto,
-		);
-	}
-
 	@Patch(":id")
 	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
-	@Roles(UserTypes.COORDINATOR)
+	@Roles(UserTypes.ADMIN)
 	@UsePipes(
 		new ValidationPipe({ transform: true, skipMissingProperties: false }),
 	)
@@ -125,7 +64,7 @@ export class BranchController {
 
 	@Delete(":id")
 	@UseGuards(JwtAuthGuard, ExclusiveRolesGuard)
-	@Roles(UserTypes.COORDINATOR)
+	@Roles(UserTypes.ADMIN)
 	async remove(@Param("id") id: string) {
 		return await this.branchService.remove(+id);
 	}

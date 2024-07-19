@@ -114,11 +114,10 @@ export default function FormLogin() {
   return (
     <>
       <Form>
-        <Logo src={`${process.env.basePath}/img/full-logo.png`} />
+        <Logo src={`${process.env.img}/full-logo.png`} />
 
         <Info>
-          Bem vindo ao <b>Pyramid</b>! Uma plataforma para gerenciar suas
-          atividades complementares.
+          Bem vindo ao <b>Beacon</b>! Uma plataforma para gerenciar as ordens de compra da sua empresa.
         </Info>
 
         <TextInput
@@ -162,10 +161,6 @@ export default function FormLogin() {
         </>
 
         <LinkWrapper>
-          <Link href="/cadastro">
-            <a>Não tem conta?</a>
-          </Link>
-          <span>•</span>
           <Link href="/conta/senha">
             <a>Esqueceu sua senha?</a>
           </Link>
@@ -173,8 +168,8 @@ export default function FormLogin() {
       </Form>
 
       <InstitutionalLogos>
-        <img src={`${process.env.basePath}/img/icomp.png`} />
-        <img src={`${process.env.basePath}/img/ufam.png`} />
+        <img src={`${process.env.img}/icomp.png`} />
+        <img src={`${process.env.img}/ufam.png`} />
       </InstitutionalLogos>
     </>
   );

@@ -32,7 +32,7 @@ export class CategoryService {
 
 		await this.updateSearchHash(category.id);
 
-		return { ...category };
+		return category;
 	}
 
 	async findAll(query: any): Promise<any> {
@@ -54,6 +54,7 @@ export class CategoryService {
 				select: {
 					id: true,
 					name: true,
+
 					isActive: true,
 					createdAt: true,
 					updatedAt: true,
@@ -95,6 +96,7 @@ export class CategoryService {
 			select: {
 				id: true,
 				name: true,
+        
 				isActive: true,
 				createdAt: true,
 				updatedAt: true,
@@ -141,7 +143,7 @@ export class CategoryService {
 
 		await this.updateSearchHash(id);
 
-		return { ...category };
+		return category;
 	}
 
 	async remove(id: number): Promise<Category> {

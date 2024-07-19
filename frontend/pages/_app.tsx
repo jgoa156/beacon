@@ -35,7 +35,7 @@ export default function AppWrapper(props: any) {
 }
 
 function App(props: any) {
-  const disabledMenusRoutes = ["entrar", "cadastro", "conta/curso", "conta/senha"];
+  const disabledMenusRoutes = ["entrar", "cadastro", "conta/filial", "conta/senha"];
   const router = useRouter();
   const isMobile = useMediaQuery({ maxWidth: 992 });
 
@@ -63,11 +63,11 @@ function App(props: any) {
         {/* Favicon */}
         <link
           rel="apple-touch-icon"
-          href={`${process.env.basePath}/img/favicon.png`}
+          href={`${process.env.img}/favicon.png`}
         />
         <link
           rel="icon"
-          href={`${process.env.basePath}/img/favicon.png`}
+          href={`${process.env.img}/favicon.png`}
         />
       </Head>
 

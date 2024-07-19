@@ -22,7 +22,7 @@ import { CustomForm, FormSection } from "./styles";
 import UserTypeSelect from "./UserTypeSelect";
 
 export default function FormAddUser() {
-  const userTypeSlugs = ["", "coordenador", "secretario", "aluno"];
+  const userTypeSlugs = ["", "administrador", "funcionario"];
   const router = useRouter();
 
   // Inputs and validators
@@ -39,32 +39,14 @@ export default function FormAddUser() {
     setEmail(value);
   };
 
-  const [cpf, setCpf] = useState<string>("");
-  const handleCpf = (value) => {
-    setCpf(value);
-  };
-
   // Institutional info
-  const [enrollment, setEnrollment] = useState<string>("");
-  const handleEnrollment = (value) => {
-    setEnrollment(value.toUpperCase());
-  };
-
-  const [startYear, setStartYear] = useState<string>("");
-  const handleStartYear = (value) => {
-    setStartYear(value);
-  };
-  function validateStartYear(value) {
-    return value.length === 4 && !isNaN(value) && parseInt(value) > 1909 && parseInt(value) <= new Date().getFullYear();
-  }
-
-  const [courses, setCourses] = useState<any[]>([]);
-  const [fetchingCourses, setFetchingCourses] = useState<boolean>(true);
-  async function fetchCourses(search = "") {
-    setFetchingCourses(true);
+  const [branches, setBranches] = useState<any[]>([]);
+  const [fetchingBranches, setFetchingBranches] = useState<boolean>(true);
+  async function fetchBranches(search = "") {
+    setFetchingBranches(true);
 
     const options = {
-      url: `${process.env.api}/courses?search=${search}`,
+      url: `${process.env.api}/branches?search=${search}`,
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -75,7 +57,7 @@ export default function FormAddUser() {
     await axios
       .request(options as AxiosRequestConfig)
       .then((response) => {
-        setCourses(response.data.courses);
+        setBranches(response.data.branches);
         setSuccess(true);
       })
       .catch((error) => {
@@ -91,40 +73,34 @@ export default function FormAddUser() {
         setSuccess(false);
       });
 
-    setFetchingCourses(false);
+    setFetchingBranches(false);
   }
 
-  const [courseSearch, setCourseSearch] = useState<string>("");
-  const handleCourseSearch = (value) => {
-    setCourseSearch(value);
+  const [branchSearch, setBranchSearch] = useState<string>("");
+  const handleBranchSearch = (value) => {
+    setBranchSearch(value);
   };
 
   useEffect(() => {
-    setFetchingCourses(true);
+    setFetchingBranches(true);
     const debounce = setTimeout(() => {
-      fetchCourses(courseSearch);
+      fetchBranches(branchSearch);
     }, 1000);
 
     return () => clearTimeout(debounce);
-  }, [courseSearch]);
+  }, [branchSearch]);
 
-  const [course, setCourse] = useState<any>(null);
-  const handleCourse = (value) => {
-    setCourse(value);
-  };
-
-  const [coursesMulti, setCoursesMulti] = useState<number[]>([]);
-  const handleCoursesMulti = (value) => {
-    setCoursesMulti(value);
+  const [branchesMulti, setBranchesMulti] = useState<number[]>([]);
+  const handleBranchesMulti = (value) => {
+    setBranchesMulti(value);
   };
 
   // Resetting SelectCustom when user type changes
   useEffect(() => {
     setSelectKey(selectKey + 1);
-    setCoursesMulti([]);
-    setCourse(null);
-    setCourseSearch("");
-  }, [userTypeId]);
+    setBranchesMulti([]);
+    setBranchSearch("");
+  }, [userTypeId]); 819692
 
   // Form state
   const [sent, setSent] = useState<boolean>(false);
@@ -137,12 +113,8 @@ export default function FormAddUser() {
 
     setName("");
     setEmail("");
-    setCpf("");
-    setEnrollment("");
-    setStartYear("");
-    setCoursesMulti([]);
-    setCourse(null);
-    setCourseSearch("");
+    setBranchesMulti([]);
+    setBranchSearch("");
 
     setSent(false);
     setSuccess(false);
@@ -157,41 +129,14 @@ export default function FormAddUser() {
     if (
       name.length != 0 &&
       validateEmail(email) &&
-      (cpf.length == 0 || validateCpf(cpf)) &&
-      ((
-        userTypeId == 3 &&
-        course != null &&
-        validateStartYear(startYear) &&
-        enrollment.length != 0
-      ) ||
-        (
-          userTypeId !== 3 &&
-          coursesMulti.length != 0
-        ))
+      (userTypeId !== 3 && branchesMulti.length != 0)
     ) {
-      let data: any = {
+      fetchAddUser({
         name,
         email,
-        userType: ["", "Coordenador", "Secretário", "Aluno"][userTypeId ? userTypeId : 0],
-      };
-
-      if (userTypeId === 3) {
-        data = {
-          ...data,
-          courseId: course,
-          enrollment,
-          startYear,
-        };
-      } else {
-        data = {
-          ...data,
-          coursesIds: coursesMulti,
-        };
-      }
-
-      if (cpf.trim().length > 0 && validateCpf(cpf)) data = { ...data, cpf };
-
-      fetchAddUser(data);
+        userType: ["", "Administrador", "Funcionário"][userTypeId ? userTypeId : 0],
+        branchesIds: branchesMulti,
+      });
     }
   }
 
@@ -218,9 +163,7 @@ export default function FormAddUser() {
       .catch((error) => {
         const badRequestMessages = {
           "Email already in use": "Email já cadastrado.",
-          "CPF already in use": "CPF já cadastrado.",
-          "Course not found": "Curso não encontrado.",
-          "Enrollment already in use": "Matrícula já cadastrada.",
+          "Branch not found": "Filial não encontrada.",
         };
 
         const errorMessages = {
@@ -280,94 +223,30 @@ export default function FormAddUser() {
               maxLength={255}
             />
 
-            <TextInput
-              label={"CPF"}
-              name={"cpf"}
-              value={cpf}
-              handleValue={handleCpf}
-              validate={validateCpf}
-              alert={"CPF Inválido"}
+            <SectionTitle>
+              <b>2.</b> Filiais vinculadas ao usuário
+            </SectionTitle>
+
+            <SelectCustom
+              key={selectKey}
+              label={"Filiais*"}
+              name={"branches"}
+              inputValue={branchSearch}
+              onInputChange={(value) => handleBranchSearch(value)}
+              value={branchesMulti}
+              handleValue={handleBranchesMulti}
+              options={branches.map((branch) => {
+                return {
+                  value: branch.id,
+                  label: branch.name,
+                };
+              })}
+              required={true}
               displayAlert={sent}
-              mask={"999.999.999-99"}
+              fetching={fetchingBranches}
+              noOptionsMessage={"Nenhuma filial encontrada"}
+              isMulti={true}
             />
-
-            {userTypeId === 3
-              ? (<>
-                <SectionTitle>
-                  <b>2.</b> Informações de matrícula
-                </SectionTitle>
-
-                <SelectCustom
-                  key={selectKey}
-                  label={"Curso*"}
-                  name={"course"}
-                  inputValue={courseSearch}
-                  onInputChange={(value) => handleCourseSearch(value)}
-                  value={course}
-                  handleValue={handleCourse}
-                  options={courses.map((course) => {
-                    return {
-                      value: course.id,
-                      label: course.name,
-                    };
-                  })}
-                  required={true}
-                  displayAlert={sent}
-                  fetching={fetchingCourses}
-                  noOptionsMessagsMultie={"Nenhum curso encontrado"}
-                />
-
-                <MultiField>
-                  <TextInput
-                    label={"Matrícula*"}
-                    name={"enrollment"}
-                    value={enrollment}
-                    handleValue={handleEnrollment}
-                    // validate={validateEnrollment}
-                    mask={"999999999"}
-                    required={true}
-                    // alert={"Matrícula inválida"}
-                    displayAlert={sent}
-                  />
-
-                  <TextInput
-                    label={"Ano de início*"}
-                    name={"startYear"}
-                    value={startYear}
-                    handleValue={handleStartYear}
-                    validate={validateStartYear}
-                    mask={"9999"}
-                    required={true}
-                    alert={"Ano inválido"}
-                    displayAlert={sent}
-                  />
-                </MultiField>
-              </>) : (<>
-                <SectionTitle>
-                  <b>2.</b> Cursos vinculados ao usuário
-                </SectionTitle>
-
-                <SelectCustom
-                  key={selectKey}
-                  label={"Cursos*"}
-                  name={"courses"}
-                  inputValue={courseSearch}
-                  onInputChange={(value) => handleCourseSearch(value)}
-                  value={coursesMulti}
-                  handleValue={handleCoursesMulti}
-                  options={courses.map((course) => {
-                    return {
-                      value: course.id,
-                      label: course.name,
-                    };
-                  })}
-                  required={true}
-                  displayAlert={sent}
-                  fetching={fetchingCourses}
-                  noOptionsMessage={"Nenhum curso encontrado"}
-                  isMulti={true}
-                />
-              </>)}
 
             <Button style={{ marginTop: 15 }} onClick={(e) => handleAddUser(e)}>
               {fetching ? (

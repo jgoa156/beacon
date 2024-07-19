@@ -17,6 +17,7 @@ import IUserLogged from "interfaces/IUserLogged";
 import SubmissionList from "components/pages/Solicitacoes/SubmissionList";
 import MySubmissionList from "components/pages/Solicitacoes/MySubmissionList";
 import MinhasSolicitacoes from "../minhas-solicitacoes";
+import { restrictPageForLoggedUsers } from "utils";
 
 export default function Home() {
   const router = useRouter();
@@ -35,13 +36,7 @@ export default function Home() {
 
   // Verifying user
   useEffect(() => {
-    if (!user.logged) {
-      router.replace("/entrar");
-    } else if (user.selectedCourse == null) {
-      router.replace("/conta/curso");
-    } else {
-      setTimeout(() => setLoaded(true), 250);
-    }
+    restrictPageForLoggedUsers(user, router, setLoaded);
   }, [user]);
 
   return (
@@ -52,9 +47,9 @@ export default function Home() {
 
       {loaded
         ? <Wrapper>
-          <Dashboard />
+          {/*<Dashboard />*/}
         </Wrapper>
-        :<div style={{ height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
+        : <div style={{ height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
           <Spinner size={"30px"} color={"var(--primary-color)"} />
         </div>
       }

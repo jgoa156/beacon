@@ -2,19 +2,17 @@
 require("dotenv").config();
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { BranchModule } from "./resources/course/course.module";
-import { UserTypeModule } from "./resources/userType/userType.module";
 import { UserModule } from "./resources/user/user.module";
 import { AuthModule } from "./resources/auth/auth.module";
-import { OrderActionModule } from "./resources/orderAction/orderAction.module";
-import { OrderActionTypeModule } from "./resources/orderActionType/orderActionType.module";
-import { ActivityGroupModule } from "./resources/activityGroup/activityGroup.module";
-import { BranchActivityGroupModule } from "./resources/courseActivityGroup/courseActivityGroup.module";
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
 
 import { CronService } from "./resources/cron/cron.service";
 import { PrismaService } from "./resources/prisma/prisma.service";
+import { BranchModule } from "./resources/branch/branch.module";
+import { CategoryModule } from "./resources/category/category.module";
+import { ProductModule } from "./resources/product/product.module";
+import { SupplierModule } from "./resources/supplier/supplier.module";
 
 @Module({
 	imports: [
@@ -26,14 +24,11 @@ import { PrismaService } from "./resources/prisma/prisma.service";
 
 		AuthModule,
 		UserModule,
-		UserTypeModule,
 
 		BranchModule,
-		ActivityGroupModule,
-		BranchActivityGroupModule,
-
-		OrderActionModule,
-		OrderActionTypeModule,
+		SupplierModule,
+		CategoryModule,
+		ProductModule,
 	],
 	providers: [CronService, PrismaService],
 })

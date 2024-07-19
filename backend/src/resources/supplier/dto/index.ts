@@ -1,2 +1,2 @@
-export * from "./create-course.dto";
-export * from "./update-course.dto";
+export * from "./create-supplier.dto";
+export * from "./update-supplier.dto";

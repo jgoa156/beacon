@@ -16,6 +16,7 @@ import SubmissionList from "components/pages/Solicitacoes/SubmissionList";
 // Interfaces
 import { IRootState } from "redux/store";
 import IUserLogged from "interfaces/IUserLogged";
+import { restrictPageForLoggedUsers } from "utils";
 
 export default function Solicitacoes() {
   const router = useRouter();
@@ -39,13 +40,7 @@ export default function Solicitacoes() {
 
   // Verifying user
   useEffect(() => {
-    if (!user.logged) {
-      router.replace("/entrar");
-    } else if (user.selectedCourse === null) {
-      router.replace("/conta/curso");
-    } else {
-      setTimeout(() => setLoaded(true), 250);
-    }
+    restrictPageForLoggedUsers(user, router, setLoaded);
   }, [user]);
 
   // Submissions
